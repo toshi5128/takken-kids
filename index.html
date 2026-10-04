@@ -123,6 +123,9 @@ body.nofuri rt{display:none}
 .shelf{display:grid;grid-template-columns:1fr 1fr;gap:10px}.it{background:#fff;border-radius:16px;padding:12px 8px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:2px;font-weight:800;font-size:15px}.it small{font-size:12px;color:var(--muted)}.it.on{outline:3px solid var(--pink)}.it.lock{opacity:.55}
 .toast{position:fixed;left:50%;bottom:calc(30px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:#fff;border-radius:16px;padding:12px 18px;font-weight:800;z-index:40;max-width:90%;text-align:center;line-height:2;animation:up .2s}
 .toast rt{color:#fff}
+.art{position:relative;width:100%;height:100%;overflow:hidden}.art>svg{position:absolute;inset:0;width:100%;height:100%}
+.art.full img{position:absolute;left:50%;bottom:2%;height:95%;transform:translateX(-50%)}
+.chara .art.bust{border-radius:50%;background:#fff;box-shadow:var(--shadow)}
 @media(prefers-reduced-motion:reduce){*{animation:none!important}}
 </style>
 </head>
@@ -134,7 +137,7 @@ body.nofuri rt{display:none}
 // ---------- data & progress ----------
 let C=null; // course.json
 const KEY='tk_v1';
-const S=Object.assign({name:'',coins:0,xp:0,stars:{},best:{},words:{},streak:{last:'',days:0},rate:0.95,furi:true,look:{...DEFAULT_LOOK},owned:ITEMS.filter(i=>!i.p).map(i=>i.id),seenStage:0},load());
+const S=Object.assign({name:'',coins:0,xp:0,stars:{},best:{},words:{},streak:{last:'',days:0},rate:0.95,furi:true,look:{...DEFAULT_LOOK},owned:[...ITEMS,...ART].filter(i=>!i.p).map(i=>i.id),seenStage:0},load());
 const myStage=()=>stageOf(level());
 function load(){try{return JSON.parse(localStorage.getItem(KEY))||{}}catch{return {}}}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch{}}
@@ -156,7 +159,7 @@ function face(who,f){
  return `<svg viewBox="0 0 100 100"><circle cx="50" cy="52" r="40" fill="#5b3a29"/><circle cx="50" cy="58" r="32" fill="#ffe2c9"/><path d="M18 52 Q20 18 50 16 Q80 18 82 52 Q70 30 50 34 Q30 30 18 52Z" fill="#6b4431"/><circle cx="78" cy="30" r="8" fill="#ff6fa5"/><circle cx="30" cy="66" r="6" fill="#ffb3c7" opacity=".7"/><circle cx="70" cy="66" r="6" fill="#ffb3c7" opacity=".7"/>${eyes}${m}</svg>`;
 }
 // ChatGPT art goes in chara/<who>_<face>.png; until a file exists the SVG above is shown.
-function chara(who,f='normal',pop=false){if(who==='mirai')return `<span class="chara${pop?' pop':''}">${avatarSVG(S.look,myStage(),f,'bust')}</span>`;return `<span class="chara${pop?' pop':''}" data-who="${who}"><img src="chara/${who}_${f}.png" alt="${NAMES[who]}" style="width:100%;height:100%;object-fit:contain" onerror="this.outerHTML=face('${who}','${f}')"></span>`}
+function chara(who,f='normal',pop=false){if(who==='mirai')return `<span class="chara${pop?' pop':''}">${avatarHTML(S.look,myStage(),f,'bust')}</span>`;return `<span class="chara${pop?' pop':''}" data-who="${who}"><img src="chara/${who}_${f}.png" alt="${NAMES[who]}" style="width:100%;height:100%;object-fit:contain" onerror="this.outerHTML=face('${who}','${f}')"></span>`}
 function say(who,f,html,pop){return `<div class="stage${who==='mirai'?' right':''}">${chara(who,f,pop)}<div class="bubble"><span class="name">${NAMES[who]}</span>${html}</div></div>`}
 
 // ---------- speech ----------
@@ -197,7 +200,7 @@ function home(){
  app.innerHTML=`${header('たっけんクエスト')}<div class="stats"><span class="pill">🪙 ${S.coins}</span><span class="pill">🔥 ${S.streak.days}<small>日</small></span><span class="pill">⭐ ${Object.values(S.stars).reduce((a,b)=>a+b,0)}</span></div>
  <div class="hello">${say('neko',done?'happy':'normal',greet,true)}</div>
  <div class="lvl"><b>レベル ${lv}</b> <span class="muted">あと${100-S.xp%100}ポイントでレベルアップ</span><div class="bar"><i style="width:${S.xp%100}%"></i></div></div>
- <button class="me" onclick="go(closet)"><span class="mefig">${avatarSVG(S.look,myStage(),done?'happy':'normal','full')}</span><span class="mecopy"><b>${esc(S.name)}</b><span class="stg">${STAGES[myStage()].name}</span>${myStage()<STAGES.length-1?`<small>レベル${STAGES[myStage()+1].from}で${STAGES[myStage()+1].name}に<ruby>成長<rt>せいちょう</rt></ruby>！</small>`:'<small>さいこうの<ruby>成長<rt>せいちょう</rt></ruby>だんかい！</small>'}<span class="pill" style="margin-top:8px">👗 きせかえ</span></span></button>
+ <button class="me" onclick="go(closet)"><span class="mefig">${avatarHTML(S.look,myStage(),done?'happy':'normal','full')}</span><span class="mecopy"><b>${esc(S.name)}</b><span class="stg">${STAGES[myStage()].name}</span>${myStage()<STAGES.length-1?`<small>レベル${STAGES[myStage()+1].from}で${STAGES[myStage()+1].name}に<ruby>成長<rt>せいちょう</rt></ruby>！</small>`:'<small>さいこうの<ruby>成長<rt>せいちょう</rt></ruby>だんかい！</small>'}<span class="pill" style="margin-top:8px">👗 きせかえ</span></span></button>
  <button class="big" onclick="go(lesson,'${nx.id}')">▶ 「${nx.titleHtml}」をはじめる</button>
  <div class="grid2"><button class="tile" onclick="go(map)"><span class="ic">🗺️</span>ステージ</button><button class="tile" onclick="go(zukan)"><span class="ic">📘</span><ruby>言葉<rt>ことば</rt></ruby>ずかん<br><small class="muted">${got} / ${Object.keys(C.words).length}</small></button></div>
  <div class="grid2"><button class="tile" onclick="go(review)"><span class="ic">🔁</span>ふくしゅう</button><button class="tile" onclick="go(settings)"><span class="ic">⚙️</span>せってい</button></div>
@@ -276,7 +279,7 @@ function zukan(){
 
 function grown(st){
  S.seenStage=st;save();confetti();
- app.innerHTML=`${header('せいちょうした！')}<div class="growstage">${avatarSVG(S.look,st,'happy','full')}</div>
+ app.innerHTML=`${header('せいちょうした！')}<div class="growstage">${avatarHTML(S.look,st,'happy','full')}</div>
  ${say('neko','happy',`すごいニャ！${esc(S.name)}ちゃんは<b>${STAGES[st].name}</b>に<ruby>成長<rt>せいちょう</rt></ruby>したよ！<br>あたらしいアイテムが<ruby>買<rt>か</rt></ruby>えるようになったニャ！`,true)}
  <button class="big" onclick="go(closet)">👗 きせかえを見る</button><div style="height:12px"></div><button class="sub" onclick="go(home)">ホームへ</button>`;
 }
@@ -285,21 +288,25 @@ let closetTab='hair',tryOn=null;
 function closet(tab){
  if(tab)closetTab=tab;
  const st=myStage(),look=tryOn?{...S.look,[tryOn.cat]:tryOn.id}:S.look;
- const items=ITEMS.filter(i=>i.cat===closetTab);
+ // With illustrated art for this stage, dress-up is by whole outfit (コーデ) plus background.
+ const arts=ART.filter(a=>a.st<=st||a.st===st+1),artMode=!!artFor(S.look,st);
+ const tabs=artMode?[['coord','コーデ'],['bg',CATS.find(c=>c[0]==='bg')[1]]]:CATS;
+ if(!tabs.some(t=>t[0]===closetTab))closetTab=tabs[0][0];
+ const items=closetTab==='coord'?arts.map(a=>({...a,cat:'coord'})):ITEMS.filter(i=>i.cat===closetTab);
  app.innerHTML=`${header('きせかえ','tryOn=null;go(home)')}
- <div class="closet-top"><div class="closet-fig">${avatarSVG(look,st,'happy','full')}</div><div class="closet-side"><span class="pill">🪙 ${S.coins}</span><span class="stg">${STAGES[st].name}</span>${tryOn?`<div class="tryon">${tryOn.name}<br>🪙 ${tryOn.p}</div><button class="big" style="font-size:17px;padding:12px" onclick="buy('${tryOn.id}')" ${S.coins<tryOn.p?'disabled':''}>${S.coins<tryOn.p?'コインが足りない':'かう！'}</button><button class="sub" style="font-size:15px;padding:10px;margin-top:8px" onclick="tryOn=null;closet()">やめる</button>`:''}</div></div>
- <div class="ctabs">${CATS.map(([c,n])=>`<button class="${c===closetTab?'on':''}" onclick="tryOn=null;closet('${c}')">${n}</button>`).join('')}</div>
- <div class="shelf">${items.map(i=>{const own=S.owned.includes(i.id),lock=i.st>st,on=S.look[i.cat]===i.id;return `<button class="it${on?' on':''}${lock?' lock':''}" onclick="pick('${i.id}')"><span class="itname">${lock?'🔒 ':''}${i.name}</span><small>${on?'きている':own?'もっている':lock?`${STAGES[i.st].name}から`:`🪙 ${i.p}`}</small></button>`}).join('')}</div>
+ <div class="closet-top"><div class="closet-fig">${avatarHTML(look,st,'happy','full')}</div><div class="closet-side"><span class="pill">🪙 ${S.coins}</span><span class="stg">${STAGES[st].name}</span>${tryOn?`<div class="tryon">${tryOn.name}<br>🪙 ${tryOn.p}</div><button class="big" style="font-size:17px;padding:12px" onclick="buy('${tryOn.id}')" ${S.coins<tryOn.p?'disabled':''}>${S.coins<tryOn.p?'コインが足りない':'かう！'}</button><button class="sub" style="font-size:15px;padding:10px;margin-top:8px" onclick="tryOn=null;closet()">やめる</button>`:''}</div></div>
+ <div class="ctabs">${tabs.map(([c,n])=>`<button class="${c===closetTab?'on':''}" onclick="tryOn=null;closet('${c}')">${n}</button>`).join('')}</div>
+ <div class="shelf">${items.map(i=>{const own=S.owned.includes(i.id),lock=i.st>st,on=(i.cat==='coord'?artFor(S.look,st)?.id:S.look[i.cat])===i.id;return `<button class="it${on?' on':''}${lock?' lock':''}" onclick="pick('${i.id}')"><span class="itname">${lock?'🔒 ':''}${i.name}</span><small>${on?'きている':own?'もっている':lock?`${STAGES[i.st].name}から`:`🪙 ${i.p}`}</small></button>`}).join('')}</div>
  <p class="muted" style="text-align:center">コインはクイズで<ruby>正解<rt>せいかい</rt></ruby>するともらえるよ</p>`;
 }
 function pick(id){
- const i=item(id),st=myStage();
+ const i=item(id)||{...ART.find(a=>a.id===id),cat:'coord'},st=myStage();
  if(i.st>st){tryOn=null;closet();toast(`${STAGES[i.st].name}になったら<ruby>買<rt>か</rt></ruby>えるよ！レベルを上げよう！`);return}
  if(S.owned.includes(id)){S.look[i.cat]=id;tryOn=null;save();closet();return}
  tryOn=i;closet();
 }
 function buy(id){
- const i=item(id);if(S.coins<i.p)return;
+ const i=item(id)||{...ART.find(a=>a.id===id),cat:'coord'};if(S.coins<i.p)return;
  S.coins-=i.p;S.owned.push(id);S.look[i.cat]=id;tryOn=null;save();confetti();closet();toast(`「${i.name}」をゲット！`);
 }
 function toast(html){const t=document.createElement('div');t.className='toast';t.innerHTML=html;document.body.appendChild(t);setTimeout(()=>t.remove(),2200)}

@@ -72,18 +72,39 @@ const item=id=>ITEMS.find(i=>i.id===id);
 
 const SKIN='#ffe2c9',SKIN_D='#f5cbaa';
 
+// Illustrated outfits ("コーデ") drawn with Gemini. Once a stage has art, it replaces the SVG parts for that stage.
+// fx/fy: face centre as a fraction of the image, cw: width of the face crop (fraction of image width).
+const ART=[
+ {id:'k_hoodie',st:0,name:'パーカーコーデ',p:0,file:'art/s1_coord1.png',fx:.48,fy:.16,cw:.6},
+];
+// Face close-ups by expression, e.g. 's1_happy':'art/s1_happy.png'. Missing ones are cut from the outfit art.
+const ART_FACES={};
+function artFor(look,stage){const mine=ART.filter(a=>a.st===stage);return mine.find(a=>a.id===look.coord)||mine[0]||null}
+function avatarHTML(look,stage,face='normal',crop='full'){
+ const a=artFor({...DEFAULT_LOOK,...look},stage);
+ if(!a)return avatarSVG(look,stage,face,crop);
+ if(crop==='full')return `<div class="art full"><svg viewBox="0 0 200 320" preserveAspectRatio="xMidYMid slice">${bgLayer({...DEFAULT_LOOK,...look}.bg)}</svg><img src="${a.file}" alt=""></div>`;
+ const f=ART_FACES[`s${stage+1}_${face}`];
+ if(f)return `<div class="art bust"><img src="${f}" alt="" style="width:100%;height:100%;object-fit:cover"></div>`;
+ const w=100/a.cw;
+ return `<div class="art bust"><img src="${a.file}" alt="" style="position:absolute;width:${w}%;left:${50-a.fx*w}%;top:calc(50% - ${a.fy} * ${w}% * var(--ar,2.8))" onload="this.style.setProperty('--ar',this.naturalHeight/this.naturalWidth)"></div>`;
+}
+
+const BG_SCENES={g_room:'<rect width="200" height="320" fill="#fff1e0"/><rect x="0" y="230" width="200" height="90" fill="#f3d9bd"/><rect x="18" y="40" width="50" height="60" rx="4" fill="#cfe9ff" stroke="#fff" stroke-width="4"/>',
+  g_sky:'<rect width="200" height="320" fill="#bfe6ff"/><circle cx="40" cy="50" r="16" fill="#fff"/><circle cx="58" cy="46" r="20" fill="#fff"/><circle cx="160" cy="80" r="14" fill="#fff"/><rect y="250" width="200" height="70" fill="#9fdc8f"/>',
+  g_sakura:'<rect width="200" height="320" fill="#ffe6f0"/>'+[[30,40],[160,60],[60,120],[150,170],[25,210],[175,250],[90,30]].map(([x,y])=>`<g fill="#ffb3cf" transform="translate(${x} ${y})"><circle r="5" cx="0" cy="-5"/><circle r="5" cx="5" cy="0"/><circle r="5" cx="0" cy="5"/><circle r="5" cx="-5" cy="0"/><circle r="2.5" fill="#fff"/></g>`).join(''),
+  g_star:'<rect width="200" height="320" fill="#2b2f6b"/>'+[[20,30],[60,70],[170,40],[140,120],[30,180],[180,200],[90,20],[110,90]].map(([x,y])=>`<path d="M${x} ${y-6} L${x+2} ${y-2} L${x+6} ${y} L${x+2} ${y+2} L${x} ${y+6} L${x-2} ${y+2} L${x-6} ${y} L${x-2} ${y-2}Z" fill="#ffe680"/>`).join(''),
+  g_city:'<rect width="200" height="320" fill="#3a2f6b"/>'+[[0,180,40],[38,150,30],[66,200,36],[100,160,28],[126,130,34],[160,190,40]].map(([x,y,w])=>`<rect x="${x}" y="${y}" width="${w}" height="${320-y}" fill="#55498f"/><rect x="${x+8}" y="${y+14}" width="6" height="6" fill="#ffd96b"/><rect x="${x+20}" y="${y+34}" width="6" height="6" fill="#ff8fc8"/>`).join('')};
+function bgLayer(id){return BG_SCENES[id]||''}
+
 function avatarSVG(look,stage,face='normal',crop='full'){
  const S=STAGES[stage],L={...DEFAULT_LOOK,...look};
  const hc=item(L.color).c,top=item(L.top),bot=item(L.bottom),sh=item(L.shoes),nail=item(L.nail);
  const cx=100,hy=S.hy,hr=S.hr,shy=hy+hr+10,sw=S.sw,waist=shy+70,leg=S.leg;
  const g=[];
  // background
- const bg={g_room:'<rect width="200" height="320" fill="#fff1e0"/><rect x="0" y="230" width="200" height="90" fill="#f3d9bd"/><rect x="18" y="40" width="50" height="60" rx="4" fill="#cfe9ff" stroke="#fff" stroke-width="4"/>',
-  g_sky:'<rect width="200" height="320" fill="#bfe6ff"/><circle cx="40" cy="50" r="16" fill="#fff"/><circle cx="58" cy="46" r="20" fill="#fff"/><circle cx="160" cy="80" r="14" fill="#fff"/><rect y="250" width="200" height="70" fill="#9fdc8f"/>',
-  g_sakura:'<rect width="200" height="320" fill="#ffe6f0"/>'+[[30,40],[160,60],[60,120],[150,170],[25,210],[175,250],[90,30]].map(([x,y])=>`<g fill="#ffb3cf" transform="translate(${x} ${y})"><circle r="5" cx="0" cy="-5"/><circle r="5" cx="5" cy="0"/><circle r="5" cx="0" cy="5"/><circle r="5" cx="-5" cy="0"/><circle r="2.5" fill="#fff"/></g>`).join(''),
-  g_star:'<rect width="200" height="320" fill="#2b2f6b"/>'+[[20,30],[60,70],[170,40],[140,120],[30,180],[180,200],[90,20],[110,90]].map(([x,y])=>`<path d="M${x} ${y-6} L${x+2} ${y-2} L${x+6} ${y} L${x+2} ${y+2} L${x} ${y+6} L${x-2} ${y+2} L${x-6} ${y} L${x-2} ${y-2}Z" fill="#ffe680"/>`).join(''),
-  g_city:'<rect width="200" height="320" fill="#3a2f6b"/>'+[[0,180,40],[38,150,30],[66,200,36],[100,160,28],[126,130,34],[160,190,40]].map(([x,y,w])=>`<rect x="${x}" y="${y}" width="${w}" height="${320-y}" fill="#55498f"/><rect x="${x+8}" y="${y+14}" width="6" height="6" fill="#ffd96b"/><rect x="${x+20}" y="${y+34}" width="6" height="6" fill="#ff8fc8"/>`).join('')}[L.bg]||'';
- if(crop==='full')g.push(bg);
+ g.push(crop==='full'?bgLayer(L.bg):'');
+
  // hair behind the head
  const back={h_bob:`<path d="M${cx-hr-6} ${hy} Q${cx-hr-8} ${hy+hr+14} ${cx-hr+6} ${hy+hr+16} L${cx+hr-6} ${hy+hr+16} Q${cx+hr+8} ${hy+hr+14} ${cx+hr+6} ${hy} Z" fill="${hc}"/>`,
   h_pony:`<path d="M${cx+hr-4} ${hy-hr+10} Q${cx+hr+34} ${hy-hr+4} ${cx+hr+24} ${hy+hr+30} Q${cx+hr+10} ${hy+30} ${cx+hr-6} ${hy-hr+22}Z" fill="${hc}"/>`,
