@@ -128,7 +128,14 @@ body.nofuri rt{display:none}
 .chara .art.bust{border-radius:50%;background:#fff;box-shadow:var(--shadow)}
 .qrow{display:flex;gap:8px;align-items:flex-start}.qrow .chara{width:64px;height:64px;animation:none}.qrow .qcard{flex:1;min-width:0}
 .art .fx,.art .petl{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
-.art .fx text{transform-box:fill-box;transform-origin:center;animation:twinkle 2.6s ease-in-out infinite}
+.art .fxs{position:absolute;transform:translate(-50%,-50%);pointer-events:none;height:auto!important;bottom:auto!important} /* not the character's full-height rule */
+.art .fxs.float{animation:fxfloat 3s ease-in-out infinite}.art .fxs.rise{animation:fxrise 4s ease-in-out infinite}
+.art .fxs.drift{animation:fxdrift 5s ease-in-out infinite}.art .fxs.spin{animation:fxspin 14s linear infinite}
+.art .fxs.spinslow{animation:fxspin 40s linear infinite}.art .fxs.flutter{animation:fxflutter 1.6s ease-in-out infinite}
+@keyframes fxfloat{50%{transform:translate(-50%,-56%)}}@keyframes fxrise{0%{transform:translate(-50%,-40%);opacity:.4}50%{opacity:1}100%{transform:translate(-50%,-62%);opacity:.4}}
+@keyframes fxdrift{50%{transform:translate(-44%,-50%)}}@keyframes fxspin{to{transform:translate(-50%,-50%) rotate(360deg)}}
+@keyframes fxflutter{50%{transform:translate(-50%,-50%) scaleX(.86)}}
+.thumb.fxthumb{background:linear-gradient(135deg,#ffe0ec,#d9e4ff);display:flex;align-items:center;justify-content:center}.thumb.fxthumb img{max-width:92%;max-height:92%}
 .art .petl text{transform-box:fill-box;transform-origin:bottom;animation:bob 1.8s ease-in-out infinite}
 @keyframes twinkle{50%{opacity:.35;transform:translateY(-8px) scale(1.15)}}
 .gacha-btn{background:linear-gradient(135deg,#ff6fa5,#ffb547);color:#fff;border-radius:16px;padding:10px;font-weight:800;font-size:17px;box-shadow:0 5px 0 #d1477f;display:flex;flex-direction:column;align-items:center;line-height:1.3}.gacha-btn small{font-size:13px}
@@ -370,6 +377,7 @@ function thumb(i){
  if(i.cat==='bg')return `<span class="thumb"><svg viewBox="0 0 200 320" preserveAspectRatio="xMidYMid slice">${bgLayer(i.id)}</svg></span>`;
  if(i.kind==='hair')return `<span class="thumb hairthumb"><img src="${i.file}" alt="" style="height:230%;display:block;margin:-3% auto 0"></span>`; // upper body, so the whole hairstyle shows
  if(i.cat==='coord')return `<span class="thumb"><img src="${i.file}" alt="" style="height:100%;display:block;margin:auto"></span>`;
+ if(i.fx)return `<span class="thumb fxthumb"><img src="art/fx/${i.fx}.png" alt=""></span>`;
  if(i.e)return `<span class="thumb emo">${Array.isArray(i.e)?i.e.slice(0,2).join(''):i.e}</span>`;
  return i.cat==='fx'||i.cat==='pet'?'<span class="thumb emo">－</span>':'';
 }

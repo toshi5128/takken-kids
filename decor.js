@@ -18,16 +18,18 @@ ITEMS.push(
  {id:'g_sunset',cat:'bg',name:R('夕','ゆう')+'やけビーチ',st:1,p:120},
  {id:'g_stage',cat:'bg',name:'ライブステージ',st:2,p:150},
  {id:'g_neon',cat:'bg',name:'ネオン'+R('街','がい'),st:2,p:150},
- // effects (float around the character)
+ // effects: illustrated sprites (art/fx, cut from a Gemini sheet by tools/fxcut.py); ids kept from the emoji version
  {id:'f_none',cat:'fx',name:'なし',st:0,p:0},
- {id:'f_kira',cat:'fx',name:'キラキラ',st:0,p:60,e:['✨']},
- {id:'f_heart',cat:'fx',name:'ハート',st:0,p:60,e:['💖','💗']},
- {id:'f_star',cat:'fx',name:R('星','ほし'),st:0,p:60,e:['⭐','🌟']},
- {id:'f_note',cat:'fx',name:R('音符','おんぷ'),st:0,p:80,e:['🎵','🎶']},
- {id:'f_bubble',cat:'fx',name:'シャボン'+R('玉','だま'),st:0,p:80,e:['🫧']},
- {id:'f_petal',cat:'fx',name:R('花','はな')+'びら',st:1,p:100,e:['🌸','🌷']},
- {id:'f_snowf',cat:'fx',name:R('雪','ゆき')+'の'+R('結晶','けっしょう'),st:1,p:100,e:['❄️']},
- {id:'f_candy',cat:'fx',name:'スイーツ',st:2,p:150,e:['🍬','🍭','🧁']},
+ {id:'f_kira',cat:'fx',name:'きらきら'+R('宝石','ほうせき'),st:0,p:60,fx:'gems'},
+ {id:'f_note',cat:'fx',name:'にじの'+R('音符','おんぷ'),st:0,p:60,fx:'notes'},
+ {id:'f_bubble',cat:'fx',name:'シャボン'+R('玉','だま'),st:0,p:60,fx:'bubbles'},
+ {id:'f_candy',cat:'fx',name:R('花','はな')+'ふぶき',st:0,p:80,fx:'flowerwind'},
+ {id:'f_snowf',cat:'fx',name:R('雪','ゆき')+'の'+R('結晶','けっしょう'),st:0,p:80,fx:'snow'},
+ {id:'f_petal',cat:'fx',name:'さくらのうず',st:0,p:100,fx:'sakura'},
+ {id:'f_koi',cat:'fx',name:'こいの'+R('水面','みなも'),st:0,p:100,fx:'koi'},
+ {id:'f_gears',cat:'fx',name:'ゼンマイと'+R('蝶','ちょう'),st:1,p:120,fx:'gears'},
+ {id:'f_heart',cat:'fx',name:R('妖精','ようせい')+'の'+R('羽','はね'),st:0,p:150,fx:'wings'},
+ {id:'f_star',cat:'fx',name:R('銀河','ぎんが')+'のオーラ',st:1,p:150,fx:'galaxy'},
  // pets at her feet
  {id:'p_none',cat:'pet',name:'なし',st:0,p:0},
  {id:'p_cat',cat:'pet',name:'ねこ',st:0,p:100,e:'🐱'},
@@ -60,12 +62,21 @@ Object.assign(BG_SCENES,{
  g_neon:'<rect width="200" height="320" fill="#14122e"/>'+dots([[0,150,46],[44,120,40],[86,170,36],[124,110,44],[166,160,40]],(x,y,w)=>`<rect x="${x}" y="${y}" width="${w}" height="${320-y}" fill="#231f4f"/>`)+'<text x="20" y="100" font-size="20" fill="#ff5cc8" font-weight="bold">LOVE</text><text x="120" y="80" font-size="18" fill="#5cf0ff" font-weight="bold">♡OPEN</text><rect y="260" width="200" height="60" fill="#1d1a40"/>',
 });
 
-// effects: a few floating symbols in front of the character
-function fxLayer(id){
- const it=ITEMS.find(i=>i.id===id);if(!it||!it.e)return'';
- const spots=[[22,40],[170,60],[30,150],[178,170],[60,90],[150,250],[18,240],[120,30]];
- return `<svg class="fx" viewBox="0 0 200 320" preserveAspectRatio="xMidYMid slice">${spots.map(([x,y],i)=>`<text x="${x}" y="${y}" font-size="${16+(i%3)*5}" style="animation-delay:${i*.35}s">${it.e[i%it.e.length]}</text>`).join('')}</svg>`;
+// Where each effect sits on the card (x/y = centre in % of the card, w = width in %), whether it is behind
+// her (wings, aura, water) or in front, and how it moves.
+const FX={
+ gems:{x:20,y:18,w:36,front:1,anim:'float'}, notes:{x:50,y:10,w:92,front:1,anim:'float'},
+ bubbles:{x:78,y:36,w:46,front:1,anim:'rise'}, flowerwind:{x:50,y:58,w:110,front:1,anim:'drift'},
+ snow:{x:50,y:20,w:110,front:0,anim:'float'}, sakura:{x:50,y:55,w:90,front:1,anim:'spin'},
+ gears:{x:66,y:66,w:70,front:1,anim:'float'}, koi:{x:50,y:86,w:96,front:0,anim:'spinslow'},
+ wings:{x:50,y:31,w:96,front:0,anim:'flutter'}, galaxy:{x:50,y:42,w:98,front:0,anim:'spinslow',op:.85},
+};
+function fxSprite(id,front){
+ const it=ITEMS.find(i=>i.id===id),f=it&&FX[it.fx];if(!f||!!f.front!==front)return'';
+ return `<img class="fxs ${f.anim}" src="art/fx/${it.fx}.png" alt="" style="left:${f.x}%;top:${f.y}%;width:${f.w}%;opacity:${f.op||1}">`;
 }
+const fxBack=id=>fxSprite(id,false),fxFront=id=>fxSprite(id,true);
+
 function petLayer(id){const it=ITEMS.find(i=>i.id===id);return it&&it.e?`<svg class="petl" viewBox="0 0 200 320" preserveAspectRatio="xMidYMid slice"><text x="12" y="306" font-size="38">${it.e}</text></svg>`:''}
 
 // Illustrated worlds (Gemini sheet "小学5年生女子の好きな世界", cut by hand into art/bg/w_*.jpg)

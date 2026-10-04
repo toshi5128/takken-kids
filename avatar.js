@@ -100,7 +100,7 @@ function artFor(look,stage){const mine=ART.filter(a=>a.st===stage);return mine.f
 function avatarHTML(look,stage,face='normal',crop='full'){
  const a=artFor({...DEFAULT_LOOK,...look},stage);
  if(!a)return avatarSVG(look,stage,face,crop);
- if(crop==='full')return `<div class="art full"><svg viewBox="0 0 200 320" preserveAspectRatio="xMidYMid slice">${bgLayer({...DEFAULT_LOOK,...look}.bg)}</svg><img src="${a.file}" alt="">${typeof petLayer==='function'?petLayer(look.pet)+fxLayer(look.fx):''}</div>`;
+ if(crop==='full')return `<div class="art full"><svg viewBox="0 0 200 320" preserveAspectRatio="xMidYMid slice">${bgLayer({...DEFAULT_LOOK,...look}.bg)}</svg>${typeof fxBack==='function'?fxBack(look.fx):''}<img src="${a.file}" alt="">${typeof petLayer==='function'?petLayer(look.pet)+fxFront(look.fx):''}</div>`;
  const f=ART_FACES[`${a.id}_${face}`];
  if(f)return `<div class="art bust"><img src="${f}" alt="" style="width:100%;height:100%;object-fit:cover"></div>`;
  const w=100/a.cw;
