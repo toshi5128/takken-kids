@@ -127,12 +127,24 @@ body.nofuri rt{display:none}
 .art.full img{position:absolute;left:50%;bottom:2%;height:95%;transform:translateX(-50%)}
 .chara .art.bust{border-radius:50%;background:#fff;box-shadow:var(--shadow)}
 .qrow{display:flex;gap:8px;align-items:flex-start}.qrow .chara{width:64px;height:64px;animation:none}.qrow .qcard{flex:1;min-width:0}
+.art .fx,.art .petl{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.art .fx text{transform-box:fill-box;transform-origin:center;animation:twinkle 2.6s ease-in-out infinite}
+.art .petl text{transform-box:fill-box;transform-origin:bottom;animation:bob 1.8s ease-in-out infinite}
+@keyframes twinkle{50%{opacity:.35;transform:translateY(-8px) scale(1.15)}}
+.gacha-btn{background:linear-gradient(135deg,#ff6fa5,#ffb547);color:#fff;border-radius:16px;padding:10px;font-weight:800;font-size:17px;box-shadow:0 5px 0 #d1477f;display:flex;flex-direction:column;align-items:center;line-height:1.3}.gacha-btn small{font-size:13px}
+.gacha{display:flex;flex-direction:column;align-items:center;gap:8px;padding-top:10px}
+.capsule{font-size:110px;line-height:1.2;filter:drop-shadow(0 8px 0 #f0d3b4)}.capsule.shake{animation:shake .25s 5}
+.gfig{width:200px;height:320px;border-radius:22px;overflow:hidden;box-shadow:var(--shadow);animation:pop .5s}
+.rare{font-size:30px;color:#ffb300;font-weight:800;letter-spacing:4px}.rare.r3{color:#ff4f8b;text-shadow:0 0 12px #ffd23f}
+.gname{margin:6px 0 0;font-size:26px;line-height:2}
+.thumb{display:block;width:100%;height:120px;border-radius:12px;overflow:hidden;background:#fff7ec;margin-bottom:6px}.thumb svg{width:100%;height:100%}.thumb.emo{font-size:46px;line-height:120px;text-align:center}
 @media(prefers-reduced-motion:reduce){*{animation:none!important}}
 </style>
 </head>
 <body>
 <div class="app" id="app"></div>
 <script src="avatar.js"></script>
+<script src="decor.js"></script>
 <script>
 'use strict';
 // ---------- data & progress ----------
@@ -194,8 +206,10 @@ function welcome(){
  $('#ok').onclick=()=>{const v=$('#nm').value.trim();if(!v){$('#nm').focus();return}S.name=v;save();go(home)};
 }
 
+const BONUS=30;
 function home(){
  if(!S.name)return welcome();
+ let bonus=false;if(S.bonusDay!==today()){S.bonusDay=today();S.coins+=BONUS;save();bonus=true}
  const ls=lessons(),done=ls.filter(l=>S.stars[l.id]!==undefined).length,nx=nextLesson(),lv=level(),got=Object.keys(S.words).length;
  const greet=done===0?`${esc(S.name)}ちゃん、まずは<ruby>最初<rt>さいしょ</rt></ruby>のレッスンからだワン！`:S.streak.last===today()?`${esc(S.name)}ちゃん、<ruby>今日<rt>きょう</rt></ruby>もがんばってるね！えらいワン！`:`おかえり、${esc(S.name)}ちゃん！<ruby>今日<rt>きょう</rt></ruby>は「${nx.titleHtml}」をやろうワン！`;
  app.innerHTML=`${header('たっけんクエスト')}<div class="stats"><span class="pill">🪙 ${S.coins}</span><span class="pill">🔥 ${S.streak.days}<small>日</small></span><span class="pill">⭐ ${Object.values(S.stars).reduce((a,b)=>a+b,0)}</span></div>
@@ -206,6 +220,7 @@ function home(){
  <div class="grid2"><button class="tile" onclick="go(map)"><span class="ic">🗺️</span>ステージ</button><button class="tile" onclick="go(zukan)"><span class="ic">📘</span><ruby>言葉<rt>ことば</rt></ruby>ずかん<br><small class="muted">${got} / ${Object.keys(C.words).length}</small></button></div>
  <div class="grid2"><button class="tile" onclick="go(review)"><span class="ic">🔁</span>ふくしゅう</button><button class="tile" onclick="go(settings)"><span class="ic">⚙️</span>せってい</button></div>
  <p class="count">クリアしたレッスン ${done} / ${ls.length}</p>`;
+ if(bonus)setTimeout(()=>{confetti();toast(`ログインボーナス！ 🪙 +${BONUS}`)},400);
 }
 
 function map(){
@@ -291,14 +306,21 @@ function closet(tab){
  const st=myStage(),look=tryOn?{...S.look,[tryOn.cat]:tryOn.id}:S.look;
  // With illustrated art for this stage, dress-up is by whole outfit (コーデ) plus background.
  const arts=ART.filter(a=>a.st<=st||a.st===st+1),artMode=!!artFor(S.look,st);
- const tabs=artMode?[['coord','コーデ'],['bg',CATS.find(c=>c[0]==='bg')[1]]]:CATS;
+ const tabs=artMode?[['coord','コーデ'],...CATS.filter(c=>['bg','fx','pet'].includes(c[0]))]:CATS;
  if(!tabs.some(t=>t[0]===closetTab))closetTab=tabs[0][0];
  const items=closetTab==='coord'?arts.map(a=>({...a,cat:'coord'})):ITEMS.filter(i=>i.cat===closetTab);
  app.innerHTML=`${header('きせかえ','tryOn=null;go(home)')}
- <div class="closet-top"><div class="closet-fig">${avatarHTML(look,st,'happy','full')}</div><div class="closet-side"><span class="pill">🪙 ${S.coins}</span><span class="stg">${STAGES[st].name}</span>${tryOn?`<div class="tryon">${tryOn.name}<br>🪙 ${tryOn.p}</div><button class="big" style="font-size:17px;padding:12px" onclick="buy('${tryOn.id}')" ${S.coins<tryOn.p?'disabled':''}>${S.coins<tryOn.p?'コインが足りない':'かう！'}</button><button class="sub" style="font-size:15px;padding:10px;margin-top:8px" onclick="tryOn=null;closet()">やめる</button>`:''}</div></div>
+ <div class="closet-top"><div class="closet-fig">${avatarHTML(look,st,'happy','full')}</div><div class="closet-side"><span class="pill">🪙 ${S.coins}</span><span class="stg">${STAGES[st].name}</span>${tryOn?'':`<button class="gacha-btn" onclick="go(gacha)">🎁 ガチャ<small>🪙 ${GACHA}</small></button>`}${tryOn?`<div class="tryon">${tryOn.name}<br>🪙 ${tryOn.p}</div><button class="big" style="font-size:17px;padding:12px" onclick="buy('${tryOn.id}')" ${S.coins<tryOn.p?'disabled':''}>${S.coins<tryOn.p?'コインが足りない':'かう！'}</button><button class="sub" style="font-size:15px;padding:10px;margin-top:8px" onclick="tryOn=null;closet()">やめる</button>`:''}</div></div>
  <div class="ctabs">${tabs.map(([c,n])=>`<button class="${c===closetTab?'on':''}" onclick="tryOn=null;closet('${c}')">${n}</button>`).join('')}</div>
- <div class="shelf">${items.map(i=>{const own=S.owned.includes(i.id),lock=i.st>st,on=(i.cat==='coord'?artFor(S.look,st)?.id:S.look[i.cat])===i.id;return `<button class="it${on?' on':''}${lock?' lock':''}" onclick="pick('${i.id}')"><span class="itname">${lock?'🔒 ':''}${i.name}</span><small>${on?'きている':own?'もっている':lock?`${STAGES[i.st].name}から`:`🪙 ${i.p}`}</small></button>`}).join('')}</div>
+ <div class="shelf">${items.map(i=>{const own=S.owned.includes(i.id),lock=i.st>st,on=(i.cat==='coord'?artFor(S.look,st)?.id:S.look[i.cat])===i.id;return `<button class="it${on?' on':''}${lock?' lock':''}" onclick="pick('${i.id}')">${thumb(i)}<span class="itname">${lock?'🔒 ':''}${i.name}</span><small>${on?'きている':own?'もっている':lock?`${STAGES[i.st].name}から`:`🪙 ${i.p}`}</small></button>`}).join('')}</div>
  <p class="muted" style="text-align:center">コインはクイズで<ruby>正解<rt>せいかい</rt></ruby>するともらえるよ</p>`;
+}
+// Small picture on each closet tile: the scene itself, or the pet / effect symbol, or the outfit art.
+function thumb(i){
+ if(i.cat==='bg')return `<span class="thumb"><svg viewBox="0 0 200 320" preserveAspectRatio="xMidYMid slice">${bgLayer(i.id)}</svg></span>`;
+ if(i.cat==='coord')return `<span class="thumb"><img src="${i.file}" alt="" style="height:100%;display:block;margin:auto"></span>`;
+ if(i.e)return `<span class="thumb emo">${Array.isArray(i.e)?i.e.slice(0,2).join(''):i.e}</span>`;
+ return i.cat==='fx'||i.cat==='pet'?'<span class="thumb emo">－</span>':'';
 }
 function pick(id){
  const i=item(id)||{...ART.find(a=>a.id===id),cat:'coord'},st=myStage();
@@ -309,6 +331,30 @@ function pick(id){
 function buy(id){
  const i=item(id)||{...ART.find(a=>a.id===id),cat:'coord'};if(S.coins<i.p)return;
  S.coins-=i.p;S.owned.push(id);S.look[i.cat]=id;tryOn=null;save();confetti();closet();toast(`「${i.name}」をゲット！`);
+}
+// Gacha: a random item she doesn't own yet, from what her stage allows. Cheaper items come up more often.
+const GACHA=50;
+function gachaPool(){const st=myStage();return ITEMS.filter(i=>['bg','fx','pet'].includes(i.cat)&&i.p>0&&i.st<=st&&!S.owned.includes(i.id))}
+function gacha(){
+ const pool=gachaPool();
+ app.innerHTML=`${header('ガチャ','go(closet)')}<div class="gacha"><div class="capsule" id="cap">🎁</div>
+ <p class="muted" style="text-align:center">${pool.length?`まだ持っていない<ruby>背景<rt>はいけい</rt></ruby>・エフェクト・おともが<ruby>当<rt>あ</rt></ruby>たるよ！（のこり${pool.length}こ）`:'ぜんぶ<ruby>集<rt>あつ</rt></ruby>めたよ！すごい！'}</p>
+ <span class="pill">🪙 ${S.coins}</span><div style="height:14px"></div>
+ <button class="big" id="spin" ${S.coins<GACHA||!pool.length?'disabled':''} onclick="spin()">${S.coins<GACHA?'コインが<ruby>足<rt>た</rt></ruby>りない':`🪙 ${GACHA} でまわす！`}</button></div>`;
+}
+function spin(){
+ const pool=gachaPool();if(S.coins<GACHA||!pool.length)return;
+ const weights=pool.map(i=>1/i.p),sum=weights.reduce((a,b)=>a+b,0);let r=Math.random()*sum,it=pool[0];
+ for(let k=0;k<pool.length;k++){r-=weights[k];if(r<=0){it=pool[k];break}}
+ S.coins-=GACHA;S.owned.push(it.id);save();
+ $('#spin').disabled=true;$('#cap').classList.add('shake');
+ setTimeout(()=>{
+  const rare=it.p>=150?3:it.p>=100?2:1,look={...S.look,[it.cat]:it.id};
+  app.innerHTML=`${header('ガチャ','go(closet)')}<div class="gacha"><div class="rare r${rare}">${'★'.repeat(rare)}</div><div class="gfig">${avatarHTML(look,myStage(),'happy','full')}</div>
+  <h2 class="gname">${it.name}</h2><p class="muted" style="text-align:center">${CATS.find(c=>c[0]===it.cat)[1]}をゲット！</p>
+  <button class="big" onclick="S.look['${it.cat}']='${it.id}';save();go(closet,'${it.cat}')">つけてみる</button><div style="height:12px"></div><button class="sub" onclick="go(gacha)">もう1回</button></div>`;
+  confetti();
+ },1300);
 }
 function toast(html){const t=document.createElement('div');t.className='toast';t.innerHTML=html;document.body.appendChild(t);setTimeout(()=>t.remove(),2200)}
 

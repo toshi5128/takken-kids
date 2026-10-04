@@ -62,7 +62,7 @@ const ITEMS=[
  {id:'g_room',cat:'bg',name:'じぶんの<ruby>部屋<rt>へや</rt></ruby>',st:0,p:0},
  {id:'g_sky',cat:'bg',name:'<ruby>青空<rt>あおぞら</rt></ruby>',st:0,p:30},
  {id:'g_sakura',cat:'bg',name:'さくら',st:1,p:80},
- {id:'g_star',cat:'bg',name:'星空',st:1,p:80},
+ {id:'g_star',cat:'bg',name:'<ruby>星空<rt>ほしぞら</rt></ruby>',st:1,p:80},
  {id:'g_city',cat:'bg',name:'<ruby>夜<rt>よる</rt></ruby>の<ruby>街<rt>まち</rt></ruby>',st:2,p:120},
 ];
 // Names are trusted constants with <ruby> for kids, so they are inserted as HTML.
@@ -88,7 +88,7 @@ function artFor(look,stage){const mine=ART.filter(a=>a.st===stage);return mine.f
 function avatarHTML(look,stage,face='normal',crop='full'){
  const a=artFor({...DEFAULT_LOOK,...look},stage);
  if(!a)return avatarSVG(look,stage,face,crop);
- if(crop==='full')return `<div class="art full"><svg viewBox="0 0 200 320" preserveAspectRatio="xMidYMid slice">${bgLayer({...DEFAULT_LOOK,...look}.bg)}</svg><img src="${a.file}" alt=""></div>`;
+ if(crop==='full')return `<div class="art full"><svg viewBox="0 0 200 320" preserveAspectRatio="xMidYMid slice">${bgLayer({...DEFAULT_LOOK,...look}.bg)}</svg><img src="${a.file}" alt="">${typeof petLayer==='function'?petLayer(look.pet)+fxLayer(look.fx):''}</div>`;
  const f=ART_FACES[`${a.id}_${face}`];
  if(f)return `<div class="art bust"><img src="${f}" alt="" style="width:100%;height:100%;object-fit:cover"></div>`;
  const w=100/a.cw;
