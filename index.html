@@ -146,6 +146,7 @@ body.nofuri rt{display:none}
 .mission b{font-size:16px}.mission span{font-size:14px;flex:1 1 60%}.mission em{font-style:normal;font-weight:800;color:var(--orange-d)}.mission.done{border-color:var(--green);background:#e6f8ee}.mission.done em{color:var(--green)}
 .gword{text-align:center;font-size:40px;font-weight:800;line-height:2.4;background:#fff;border-radius:24px;box-shadow:var(--shadow);margin:10px 0}
 .gopts{display:flex;flex-direction:column;gap:12px}.gopts .sub{text-align:left;font-size:16px;line-height:2;font-weight:500}
+.thumb.hairthumb{width:100%;height:130px;margin:0 auto 6px}
 @media(prefers-reduced-motion:reduce){*{animation:none!important}}
 </style>
 </head>
@@ -352,19 +353,22 @@ function closet(tab){
  if(tab)closetTab=tab;
  const st=myStage(),look=tryOn?{...S.look,[tryOn.cat]:tryOn.id}:S.look;
  // With illustrated art for this stage, dress-up is by whole outfit (コーデ) plus background.
- const arts=ART.filter(a=>a.st<=st||a.st===st+1),artMode=!!artFor(S.look,st);
- const tabs=artMode?[['coord','コーデ'],...CATS.filter(c=>['bg','fx','pet'].includes(c[0]))]:CATS;
+ // Only this stage's outfits (and the next stage's, shown locked as something to look forward to).
+ const arts=ART.filter(a=>a.st===st||a.st===st+1),artMode=!!artFor(S.look,st),hairArts=arts.filter(a=>a.kind==='hair');
+ const tabs=artMode?[['coord','コーデ'],...(hairArts.length?[['hairart','<ruby>髪型<rt>かみがた</rt></ruby>']]:[]),...CATS.filter(c=>['bg','fx','pet'].includes(c[0]))]:CATS;
  if(!tabs.some(t=>t[0]===closetTab))closetTab=tabs[0][0];
- const items=closetTab==='coord'?arts.map(a=>({...a,cat:'coord'})):ITEMS.filter(i=>i.cat===closetTab);
+ const items=closetTab==='coord'?arts.filter(a=>a.kind!=='hair').map(a=>({...a,cat:'coord'})):closetTab==='hairart'?hairArts.map(a=>({...a,cat:'coord'})):ITEMS.filter(i=>i.cat===closetTab);
  app.innerHTML=`${header('きせかえ','tryOn=null;go(home)')}
  <div class="closet-top"><div class="closet-fig">${avatarHTML(look,st,'happy','full')}</div><div class="closet-side"><span class="pill">🪙 ${S.coins}</span><span class="stg">${STAGES[st].name}</span>${tryOn?'':`<button class="gacha-btn" onclick="go(gacha)">🎁 ガチャ<small>🪙 ${GACHA}</small></button>`}${tryOn?`<div class="tryon">${tryOn.name}<br>🪙 ${tryOn.p}</div><button class="big" style="font-size:17px;padding:12px" onclick="buy('${tryOn.id}')" ${S.coins<tryOn.p?'disabled':''}>${S.coins<tryOn.p?'コインが足りない':'かう！'}</button><button class="sub" style="font-size:15px;padding:10px;margin-top:8px" onclick="tryOn=null;closet()">やめる</button>`:''}</div></div>
  <div class="ctabs">${tabs.map(([c,n])=>`<button class="${c===closetTab?'on':''}" onclick="tryOn=null;closet('${c}')">${n}</button>`).join('')}</div>
+ ${closetTab==='hairart'?'<p class="muted" style="text-align:center">パーカーコーデの<ruby>髪型<rt>かみがた</rt></ruby>だよ。ほかの<ruby>服<rt>ふく</rt></ruby>の<ruby>髪型<rt>かみがた</rt></ruby>はこれから<ruby>増<rt>ふ</rt></ruby>えるワン！</p>':''}
  <div class="shelf">${items.map(i=>{const own=S.owned.includes(i.id),lock=i.st>st,on=(i.cat==='coord'?artFor(S.look,st)?.id:S.look[i.cat])===i.id;return `<button class="it${on?' on':''}${lock?' lock':''}" onclick="pick('${i.id}')">${thumb(i)}<span class="itname">${lock?'🔒 ':''}${i.name}</span><small>${on?'きている':own?'もっている':lock?`${STAGES[i.st].name}から`:`🪙 ${i.p}`}</small></button>`}).join('')}</div>
  <p class="muted" style="text-align:center">コインはクイズで<ruby>正解<rt>せいかい</rt></ruby>するともらえるよ</p>`;
 }
 // Small picture on each closet tile: the scene itself, or the pet / effect symbol, or the outfit art.
 function thumb(i){
  if(i.cat==='bg')return `<span class="thumb"><svg viewBox="0 0 200 320" preserveAspectRatio="xMidYMid slice">${bgLayer(i.id)}</svg></span>`;
+ if(i.kind==='hair')return `<span class="thumb hairthumb"><img src="${i.file}" alt="" style="height:230%;display:block;margin:-3% auto 0"></span>`; // upper body, so the whole hairstyle shows
  if(i.cat==='coord')return `<span class="thumb"><img src="${i.file}" alt="" style="height:100%;display:block;margin:auto"></span>`;
  if(i.e)return `<span class="thumb emo">${Array.isArray(i.e)?i.e.slice(0,2).join(''):i.e}</span>`;
  return i.cat==='fx'||i.cat==='pet'?'<span class="thumb emo">－</span>':'';

@@ -78,6 +78,18 @@ const ART=[
  {id:'k_hoodie',st:0,name:'パーカーコーデ',p:0,file:'art/s1_coord1.png',fx:.51,fy:.163,cw:.6},
  {id:'k_dress',st:0,name:'<ruby>水色<rt>みずいろ</rt></ruby>ワンピース',p:60,file:'art/s1_coord2.png',fx:.484,fy:.165,cw:.95},
  {id:'k_border',st:0,name:'ボーダーT＆ショートパンツ',p:60,file:'art/s1_coord3.png',fx:.477,fy:.16,cw:1.2},
+ // hairstyles for the hoodie outfit (Gemini sheet joined to the full body by tools/hairstyles.py)
+ {id:'h1_pony',st:0,kind:'hair',name:'ポニーテール',p:40,file:'art/s1_hair_pony.png',fx:0.475,fy:0.229,cw:0.56},
+ {id:'h1_bob',st:0,kind:'hair',name:'ボブ',p:40,file:'art/s1_hair_bob.png',fx:0.512,fy:0.180,cw:0.60},
+ {id:'h1_twinshort',st:0,kind:'hair',name:'ちょこんとツイン',p:40,file:'art/s1_hair_twinshort.png',fx:0.507,fy:0.180,cw:0.58},
+ {id:'h1_long',st:0,kind:'hair',name:'さらさらロング',p:40,file:'art/s1_hair_long.png',fx:0.506,fy:0.181,cw:0.55},
+ {id:'h1_crown',st:0,kind:'hair',name:'あみこみカチューシャ',p:80,file:'art/s1_hair_crown.png',fx:0.509,fy:0.173,cw:0.54},
+ {id:'h1_bun',st:0,kind:'hair',name:'おだんご',p:60,file:'art/s1_hair_bun.png',fx:0.505,fy:0.216,cw:0.59},
+ {id:'h1_drill',st:0,kind:'hair',name:'くるくるツインテール',p:100,file:'art/s1_hair_drill.png',fx:0.479,fy:0.178,cw:0.53},
+ {id:'h1_short',st:0,kind:'hair',name:'ショートカット',p:60,file:'art/s1_hair_short.png',fx:0.504,fy:0.189,cw:0.56},
+ {id:'h1_sidebraid',st:0,kind:'hair',name:'サイドみつあみ',p:80,file:'art/s1_hair_sidebraid.png',fx:0.502,fy:0.184,cw:0.57},
+ {id:'h1_asym',st:0,kind:'hair',name:'クールなアシメ',p:150,file:'art/s1_hair_asym.png',fx:0.522,fy:0.171,cw:0.57},
+ {id:'h1_updo',st:0,kind:'hair',name:'ふんわりアップ',p:100,file:'art/s1_hair_updo.png',fx:0.507,fy:0.192,cw:0.59},
  {id:'m_sailor',st:1,name:'セーラー<ruby>服<rt>ふく</rt></ruby>',p:0,file:'art/s2_coord1.png',fx:.474,fy:.15,cw:.66},
  {id:'g_uniform',st:2,name:'<ruby>制服<rt>せいふく</rt></ruby>ギャル',p:0,file:'art/s3_coord1.png',fx:.502,fy:.145,cw:.64},
 ];
