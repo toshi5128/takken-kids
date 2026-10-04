@@ -14,7 +14,9 @@ KANJI = re.compile(r'[㐀-鿿々]')
 READING_FIX = {'年れい': None, '何千万円': 'なんぜんまんえん', '大家': 'おおや', '水路': 'すいろ', '本店': 'ほんてん', '支店': 'してん',
                '1部屋': None, '部屋': 'へや', '区切': 'くぎ', '日本中': 'にほんじゅう', '前日': 'ぜんじつ', '何回': 'なんかい',
                '何': 'なに', '1年': None, '1回': None,
-               '母さん': 'かあさん', '父さん': 'とうさん', '言う': 'いう', '日本': 'にほん'}
+               '母さん': 'かあさん', '父さん': 'とうさん', '言う': 'いう', '日本': 'にほん',
+               # domain words the dictionary reads wrongly (業 alone is ごう in UniDic)
+               '業': 'ぎょう', '1人': 'ひとり', '間に入': 'あいだにはい', '90日': 'きゅうじゅうにち', '30日': 'さんじゅうにち'}
 tagger = fugashi.Tagger()
 
 
@@ -64,8 +66,8 @@ def furigana_plain(text):
     return ''.join(parts)
 
 
-def render(text, terms):
-    """Terms first (longest wins), the rest through furigana."""
+def render(text, terms, link=True):
+    """Terms first (longest wins), the rest through furigana. link=False: glossary reading only (titles)."""
     if not terms:
         return furigana(text)
     pat =re.compile('|'.join(re.escape(t) for t in sorted(terms, key=len, reverse=True)))
@@ -73,7 +75,8 @@ def render(text, terms):
     for m in pat.finditer(text):
         out.append(furigana(text[pos:m.start()]))
         t = m.group(0)
-        out.append(f'<button class="w" data-w="{html.escape(t)}">' + ruby(t, terms[t]['yomi']) + '</button>')
+        r = ruby(t, terms[t]['yomi'])
+        out.append(f'<button class="w" data-w="{html.escape(t)}">{r}</button>' if link else r)
         pos = m.end()
     out.append(furigana(text[pos:]))
     return ''.join(out)
@@ -85,21 +88,31 @@ def main():
     for f in sorted((ROOT / 'content').glob('ch*.json')):
         ch = json.loads(f.read_text(encoding='utf-8'))
         for les in ch['lessons']:
-            les['titleHtml'] = furigana(les['title'])
+            les['titleHtml'] = render(les['title'], terms, link=False)
             for p in les['panels']:
                 p['html'] = render(p['text'], terms)
             for q in les['quiz']:
                 q['qHtml'] = render(q['q'], terms); q['whyHtml'] = render(q['why'], terms)
             missing = [w for w in les['words'] if w not in terms]
             if missing: sys.exit(f'{les["id"]}: words.json に無い言葉 {missing}')
-        ch['titleHtml'] = furigana(ch['title']); ch['subtitleHtml'] = furigana(ch['subtitle'])
+        ch['titleHtml'] = render(ch['title'], terms, link=False); ch['subtitleHtml'] = render(ch['subtitle'], terms, link=False)
         chapters.append(ch)
     words = {t: {**v, 'meanHtml': render(v['mean'], {}), 'tatoeHtml': render(v['tatoe'], {})} for t, v in terms.items()}
     (ROOT / 'data/course.json').write_text(json.dumps({'chapters': chapters, 'words': words}, ensure_ascii=False), encoding='utf-8')
     print(f'OK: {len(chapters)}章 {sum(len(c["lessons"]) for c in chapters)}レッスン 言葉{len(words)}')
+    seen = {}
+    def scan(h, where):
+        for base, rt in re.findall(r'<ruby>([^<]+)<rt>([^<]*)</rt></ruby>', h):
+            seen.setdefault(base, {}).setdefault(rt, where)
+    for c in chapters:
+        for l in c['lessons']:
+            scan(l['titleHtml'], l['id'])
+            for p in l['panels']: scan(p['html'], l['id'])
+            for q in l['quiz']: scan(q['qHtml'], l['id']); scan(q['whyHtml'], l['id'])
+    split = {b: r for b, r in seen.items() if len(r) > 1}
+    print('読みが2通り以上:', split or 'なし', '← 文に合っているか必ず確認')
     if '--check' in sys.argv:
-        for k, v in sorted(SEEN.items()):
-            print(k, v)
+        print(' '.join(f"{b}={'/'.join(r)}" for b, r in sorted(seen.items())))
 
 
 if __name__ == '__main__':

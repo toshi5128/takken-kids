@@ -179,7 +179,8 @@ function say(who,f,html,pop){return `<div class="stage${who==='mirai'?' right':'
 let voice=null;
 function pickVoice(){const v=speechSynthesis.getVoices().filter(v=>/^ja/i.test(v.lang));voice=v.find(v=>/Google|Kyoko|Nanami|Haruka/i.test(v.name))||v[0]||null}
 if('speechSynthesis' in window){pickVoice();speechSynthesis.onvoiceschanged=pickVoice}
-function plain(html){const d=document.createElement('div');d.innerHTML=html;d.querySelectorAll('rt').forEach(r=>r.remove());return d.textContent}
+// The voice reads the furigana shown on screen, so it can never say a reading different from what she sees.
+function plain(html){const d=document.createElement('div');d.innerHTML=html;d.querySelectorAll('ruby').forEach(r=>{const rt=r.querySelector('rt');r.replaceWith(rt?rt.textContent:r.textContent)});return d.textContent}
 function speak(html){if(!('speechSynthesis' in window))return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(plain(html));u.lang='ja-JP';u.rate=S.rate;if(voice)u.voice=voice;speechSynthesis.speak(u)}
 
 // ---------- streak / rewards ----------
