@@ -90,6 +90,10 @@ def main():
         for les in ch['lessons']:
             les['titleHtml'] = render(les['title'], terms, link=False)
             for p in les['panels']:
+                if 'table' in p:  # 図で見るまとめ: a small table, first row is the header
+                    p['titleHtml'] = render(p['title'], terms, link=False)
+                    p['tableHtml'] = [[render(c, terms, link=False) for c in row] for row in p['table']]
+                    p['text'] = p['title'] + '。' + '。'.join('、'.join(r) for r in p['table'])
                 p['html'] = render(p['text'], terms)
             for q in les['quiz']:
                 q['qHtml'] = render(q['q'], terms); q['whyHtml'] = render(q['why'], terms)

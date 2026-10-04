@@ -138,6 +138,14 @@ body.nofuri rt{display:none}
 .rare{font-size:30px;color:#ffb300;font-weight:800;letter-spacing:4px}.rare.r3{color:#ff4f8b;text-shadow:0 0 12px #ffd23f}
 .gname{margin:6px 0 0;font-size:26px;line-height:2}
 .thumb{display:block;width:100%;height:120px;border-radius:12px;overflow:hidden;background:#fff7ec;margin-bottom:6px}.thumb svg{width:100%;height:100%}.thumb.emo{font-size:46px;line-height:120px;text-align:center}
+.zu{background:#fff;border-radius:22px;padding:14px;box-shadow:var(--shadow);margin:8px 0}.zu .lbl{display:inline-block;background:var(--blue);color:#fff;border-radius:999px;padding:0 12px;font-size:14px;line-height:1.9}
+.zu h3{margin:8px 0;font-size:18px;line-height:2}.zu table{width:100%;border-collapse:separate;border-spacing:4px;font-size:15px;line-height:1.9}
+.zu th{background:#fff1b8;border-radius:10px;padding:4px 6px;font-size:13px}.zu td{background:#fff7ec;border-radius:10px;padding:6px;text-align:center}.zu tr>td:first-child{white-space:nowrap;font-weight:800;text-align:left}.zu .lbl rt{color:#fff}
+.mk{font-size:28px;font-weight:800;line-height:1}.mk.ok{color:var(--green)}.mk.ng{color:var(--red)}
+.mission{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;background:linear-gradient(135deg,#fff3c4,#ffe0ec);border:3px solid var(--yellow);border-radius:18px;padding:10px 14px;margin-bottom:14px;line-height:1.9}
+.mission b{font-size:16px}.mission span{font-size:14px;flex:1 1 60%}.mission em{font-style:normal;font-weight:800;color:var(--orange-d)}.mission.done{border-color:var(--green);background:#e6f8ee}.mission.done em{color:var(--green)}
+.gword{text-align:center;font-size:40px;font-weight:800;line-height:2.4;background:#fff;border-radius:24px;box-shadow:var(--shadow);margin:10px 0}
+.gopts{display:flex;flex-direction:column;gap:12px}.gopts .sub{text-align:left;font-size:16px;line-height:2;font-weight:500}
 @media(prefers-reduced-motion:reduce){*{animation:none!important}}
 </style>
 </head>
@@ -207,7 +215,9 @@ function welcome(){
  $('#ok').onclick=()=>{const v=$('#nm').value.trim();if(!v){$('#nm').focus();return}S.name=v;save();go(home)};
 }
 
-const BONUS=30;
+const BONUS=30,MISSION=50;
+function missionDone(){return S.mission===today()}
+function completeMission(){if(missionDone())return false;S.mission=today();S.coins+=MISSION;save();return true}
 function home(){
  if(!S.name)return welcome();
  let bonus=false;if(S.bonusDay!==today()){S.bonusDay=today();S.coins+=BONUS;save();bonus=true}
@@ -217,9 +227,10 @@ function home(){
  <div class="hello">${say('neko',done?'happy':'normal',greet,true)}</div>
  <div class="lvl"><b>レベル ${lv}</b> <span class="muted">あと${100-S.xp%100}ポイントでレベルアップ</span><div class="bar"><i style="width:${S.xp%100}%"></i></div></div>
  <button class="me" onclick="go(closet)"><span class="mefig">${avatarHTML(S.look,myStage(),done?'happy':'normal','full')}</span><span class="mecopy"><b>${esc(S.name)}</b><span class="stg">${STAGES[myStage()].name}</span>${myStage()<STAGES.length-1?`<small>レベル${STAGES[myStage()+1].from}で${STAGES[myStage()+1].name}に<ruby>成長<rt>せいちょう</rt></ruby>！</small>`:'<small>さいこうの<ruby>成長<rt>せいちょう</rt></ruby>だんかい！</small>'}<span class="pill" style="margin-top:8px">👗 きせかえ</span></span></button>
+ <div class="mission ${missionDone()?'done':''}"><b>🎯 <ruby>今日<rt>きょう</rt></ruby>のミッション</b><span>レッスン・ふくしゅう・ことばゲームのどれかを1<ruby>回<rt>かい</rt></ruby>クリア</span><em>${missionDone()?'✅ クリア！':`🪙 +${MISSION}`}</em></div>
  <button class="big" onclick="go(lesson,'${nx.id}')">▶ 「${nx.titleHtml}」をはじめる</button>
  <div class="grid2"><button class="tile" onclick="go(map)"><span class="ic">🗺️</span>ステージ</button><button class="tile" onclick="go(zukan)"><span class="ic">📘</span><ruby>言葉<rt>ことば</rt></ruby>ずかん<br><small class="muted">${got} / ${Object.keys(C.words).length}</small></button></div>
- <div class="grid2"><button class="tile" onclick="go(review)"><span class="ic">🔁</span>ふくしゅう</button><button class="tile" onclick="go(settings)"><span class="ic">⚙️</span>せってい</button></div>
+ <div class="grid2"><button class="tile" onclick="go(review)"><span class="ic">🔁</span>ふくしゅう</button><button class="tile" onclick="go(wordgame)"><span class="ic">🎮</span>ことばゲーム</button><button class="tile" onclick="go(settings)"><span class="ic">⚙️</span>せってい</button></div>
  <p class="count">クリアしたレッスン ${done} / ${ls.length}</p>`;
  if(bonus)setTimeout(()=>{confetti();toast(`ログインボーナス！ 🪙 +${BONUS}`)},400);
 }
@@ -236,12 +247,18 @@ function map(){
 
 function lesson(id,idx=0){
  const l=lessons().find(l=>l.id===id),p=l.panels[idx],last=idx===l.panels.length-1;
- const body=p.who==='point'?`<div class="point"><b class="lbl">ここがポイント！</b><br>${p.html}</div>${chara('neko','happy',true)}`:say(p.who,p.face||'normal',p.html,true);
+ const body=p.who==='zu'?zuCard(p):p.who==='point'?`<div class="point"><b class="lbl">ここがポイント！</b><br>${p.html}</div>${chara('neko','happy',true)}`:say(p.who,p.face||'normal',p.html,true);
  app.innerHTML=`<div class="top"><button class="back" onclick="go(home)" aria-label="やめる">×</button><div class="prog"><i style="width:${(idx+1)/l.panels.length*100}%"></i></div><button class="back" onclick="speak(document.querySelector('.lesson').innerHTML)" aria-label="よみあげ">🔊</button></div>
  <div class="muted" style="text-align:center">${l.titleHtml}</div><div class="lesson">${body}</div>
  <p class="muted" style="text-align:center">きいろの<ruby>言葉<rt>ことば</rt></ruby>をタップすると<ruby>意味<rt>いみ</rt></ruby>が出るよ</p>
  <div class="tapnext">${idx>0?`<button class="sub" onclick="go(lesson,'${id}',${idx-1})" aria-label="まえへ">‹</button>`:''}<button class="big ${last?'green':''}" onclick="${last?`go(quiz,'${id}')`:`go(lesson,'${id}',${idx+1})`}">${last?'クイズにちょうせん！':'つぎへ ›'}</button></div>`;
  if(S.autoRead)speak($('.lesson').innerHTML);
+}
+
+// 図で見るまとめ: ○ and × become big coloured marks so the pattern is visible at a glance.
+function zuCard(p){
+ const cell=h=>h==='○'?'<span class="mk ok">○</span>':h==='×'?'<span class="mk ng">×</span>':h;
+ return `<div class="zu"><b class="lbl">📊 <ruby>図<rt>ず</rt></ruby>で<ruby>見<rt>み</rt></ruby>てみよう</b><h3>${p.titleHtml}</h3><table>${p.tableHtml.map((r,i)=>`<tr>${r.map(c=>i===0?`<th>${c}</th>`:`<td>${cell(c)}</td>`).join('')}</tr>`).join('')}</table></div>${chara('neko','happy',true)}`;
 }
 
 let Q=null;
@@ -279,7 +296,7 @@ function result(){
  <div class="earn">${ok} / ${n} もんせいかい　🪙 +${coins}</div>
  ${fresh.length?`<div class="muted" style="text-align:center">あたらしい<ruby>言葉<rt>ことば</rt></ruby>カードをゲット！</div><div class="newwords">${fresh.map((w,i)=>`<button class="w" data-w="${esc(w)}" style="animation-delay:${i*.12}s"><ruby>${esc(w)}<rt>${esc(C.words[w].yomi)}</rt></ruby></button>`).join('')}</div>`:''}
  ${star===0&&Q.id?`<button class="big" onclick="go(quiz,'${Q.id}')">もう1回クイズ</button><div style="height:12px"></div><button class="sub" onclick="go(lesson,'${Q.id}')">レッスンを見なおす</button>`:`<button class="big" onclick="go(home)">ホームへ</button><div style="height:12px"></div><button class="sub" onclick="go(map)">ステージを見る</button>`}`;
- if(star>0)confetti();
+ if(star>0){confetti();if(completeMission())setTimeout(()=>toast(`🎯 ミッションクリア！ 🪙 +${MISSION}`),1200)}
  if(myStage()>before)setTimeout(()=>grown(myStage()),900);
 }
 
@@ -287,6 +304,35 @@ function review(){
  const items=Object.values(S.miss||{});
  if(!items.length){app.innerHTML=`${header('ふくしゅう','go(home)')}${say('neko','happy','まちがえた<ruby>問題<rt>もんだい</rt></ruby>はないよ！すごいワン！<br>レッスンでクイズをすると、まちがえた<ruby>問題<rt>もんだい</rt></ruby>がここにたまるよ。',true)}<button class="big" onclick="go(home)">ホームへ</button>`;return}
  quiz(null,items.sort(()=>Math.random()-.5).slice(0,10),'ふくしゅう');
+}
+
+let G=null;
+function wordgame(){
+ const mine=Object.keys(S.words);
+ if(mine.length<3){app.innerHTML=`${header('ことばゲーム','go(home)')}${say('neko','normal','<ruby>言葉<rt>ことば</rt></ruby>カードが3まい<ruby>集<rt>あつ</rt></ruby>まると<ruby>遊<rt>あそ</rt></ruby>べるワン！まずはレッスンをクリアしよう！',true)}<button class="big" onclick="go(home)">ホームへ</button>`;return}
+ const pick=a=>a[Math.floor(Math.random()*a.length)],shuffle=a=>a.map(x=>[Math.random(),x]).sort((p,q)=>p[0]-q[0]).map(x=>x[1]);
+ const all=Object.keys(C.words),rounds=shuffle(mine).slice(0,5);
+ G={i:0,ok:0,list:rounds.map(t=>({t,opts:shuffle([t,...shuffle(all.filter(x=>x!==t)).slice(0,2)])}))};
+ gShow();
+}
+const short=h=>{const d=document.createElement('div');d.innerHTML=h;const t=d.innerHTML.split('。')[0];return t+'。'};
+function gShow(){
+ const g=G.list[G.i],w=C.words[g.t];
+ app.innerHTML=`<div class="top"><button class="back" onclick="go(home)" aria-label="やめる">×</button><div class="prog"><i style="width:${G.i/G.list.length*100}%"></i></div><span class="pill">⭐ ${G.ok}</span></div>
+ <div class="qno">ことばゲーム ${G.i+1} / ${G.list.length}</div><div class="gword"><ruby>${esc(g.t)}<rt>${esc(w.yomi)}</rt></ruby></div>
+ <p class="muted" style="text-align:center">この<ruby>言葉<rt>ことば</rt></ruby>の<ruby>意味<rt>いみ</rt></ruby>はどれ？</p>
+ <div id="gopts" class="gopts">${g.opts.map(o=>`<button class="sub" onclick="gAnswer('${esc(o)}')">${short(C.words[o].meanHtml)}</button>`).join('')}</div>`;
+}
+function gAnswer(o){
+ const g=G.list[G.i],ok=o===g.t;if(ok)G.ok++;
+ $('#gopts').innerHTML=`<div class="fb ${ok?'ok':'ng'}"><div class="stage">${chara('mirai',ok?'happy':'sad',true)}<div><h3>${ok?'せいかい！':'ざんねん…'}</h3></div></div><div>${C.words[g.t].meanHtml}<br>💡 ${C.words[g.t].tatoeHtml}</div></div><div style="height:14px"></div><button class="big ${ok?'green':'blue'}" onclick="gNext()">${G.i+1<G.list.length?'つぎへ ›':'けっかを見る'}</button>`;
+}
+function gNext(){
+ G.i++;if(G.i<G.list.length)return gShow();
+ const coins=G.ok*5;S.coins+=coins;S.xp+=G.ok*5;touchStreak();save();const m=G.ok>=3&&completeMission();
+ app.innerHTML=`${header('けっか')}${say('neko',G.ok>=4?'happy':'normal',G.ok===G.list.length?'ぜんぶわかったね！言葉はかせだワン！':'よくがんばったワン！また<ruby>遊<rt>あそ</rt></ruby>ぼう！',true)}
+ <div class="earn">${G.ok} / ${G.list.length} もんせいかい　🪙 +${coins}</div><button class="big" onclick="go(wordgame)">もう1<ruby>回<rt>かい</rt></ruby></button><div style="height:12px"></div><button class="sub" onclick="go(home)">ホームへ</button>`;
+ confetti();if(m)setTimeout(()=>toast(`🎯 ミッションクリア！ 🪙 +${MISSION}`),900);
 }
 
 function zukan(){
