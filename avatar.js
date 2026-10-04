@@ -78,7 +78,7 @@ const ART=[
  {id:'k_hoodie',st:0,name:'パーカーコーデ',p:0,file:'art/s1_coord1.png',fx:.48,fy:.16,cw:.6},
 ];
 // Face close-ups by expression, e.g. 's1_happy':'art/s1_happy.png'. Missing ones are cut from the outfit art.
-const ART_FACES={};
+const ART_FACES=Object.fromEntries(['normal','happy','surprise','think','sad'].map(f=>['s1_'+f,'art/s1_'+f+'.jpg']));
 function artFor(look,stage){const mine=ART.filter(a=>a.st===stage);return mine.find(a=>a.id===look.coord)||mine[0]||null}
 function avatarHTML(look,stage,face='normal',crop='full'){
  const a=artFor({...DEFAULT_LOOK,...look},stage);

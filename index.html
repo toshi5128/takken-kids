@@ -126,6 +126,7 @@ body.nofuri rt{display:none}
 .art{position:relative;width:100%;height:100%;overflow:hidden}.art>svg{position:absolute;inset:0;width:100%;height:100%}
 .art.full img{position:absolute;left:50%;bottom:2%;height:95%;transform:translateX(-50%)}
 .chara .art.bust{border-radius:50%;background:#fff;box-shadow:var(--shadow)}
+.qrow{display:flex;gap:8px;align-items:flex-start}.qrow .chara{width:64px;height:64px;animation:none}.qrow .qcard{flex:1;min-width:0}
 @media(prefers-reduced-motion:reduce){*{animation:none!important}}
 </style>
 </head>
@@ -236,14 +237,14 @@ function quiz(id,items,title){
 function qShow(){
  const q=Q.list[Q.i];
  app.innerHTML=`<div class="top"><button class="back" onclick="go(home)" aria-label="やめる">×</button><div class="prog"><i style="width:${Q.i/Q.list.length*100}%"></i></div><button class="back" onclick="speak(Q.list[Q.i].qHtml)" aria-label="よみあげ">🔊</button></div>
- <div class="qno">もんだい ${Q.i+1} / ${Q.list.length}　<span class="muted">${Q.title}</span></div><div class="qcard">${q.qHtml}</div>
+ <div class="qno">もんだい ${Q.i+1} / ${Q.list.length}　<span class="muted">${Q.title}</span></div><div class="qrow">${chara('mirai','think')}<div class="qcard">${q.qHtml}</div></div>
  <div class="combo">${Q.combo>=2?`🔥 ${Q.combo}れんぞく せいかい！`:''}</div>
  <div id="ans"><div class="ox"><button class="o" onclick="qAnswer(true)" aria-label="まる">○</button><button class="x" onclick="qAnswer(false)" aria-label="ばつ">×</button></div></div>`;
 }
 function qAnswer(v){
  const q=Q.list[Q.i],ok=v===q.a;
  if(ok){Q.ok++;Q.combo++}else{Q.combo=0;Q.miss.push(q)}
- $('#ans').innerHTML=`<div class="fb ${ok?'ok':'ng'}"><div class="stage">${chara('neko',ok?'happy':'sad',true)}<div><h3>${ok?'せいかい！':'ざんねん…'}</h3><div>こたえは <b style="font-size:24px">${q.a?'○':'×'}</b></div></div></div><div>${q.whyHtml}</div></div><div style="height:14px"></div><button class="big ${ok?'green':'blue'}" onclick="qNext()">${Q.i+1<Q.list.length?'つぎのもんだい ›':'けっかを見る'}</button>`;
+ $('#ans').innerHTML=`<div class="fb ${ok?'ok':'ng'}"><div class="stage">${chara('mirai',ok?'happy':'sad',true)}<div><h3>${ok?'せいかい！':'ざんねん…'}</h3><div>こたえは <b style="font-size:24px">${q.a?'○':'×'}</b></div></div></div><div>${q.whyHtml}</div></div><div style="height:14px"></div><button class="big ${ok?'green':'blue'}" onclick="qNext()">${Q.i+1<Q.list.length?'つぎのもんだい ›':'けっかを見る'}</button>`;
  if(!ok)speak(q.whyHtml);
 }
 function qNext(){Q.i++;if(Q.i<Q.list.length)return qShow();result()}
