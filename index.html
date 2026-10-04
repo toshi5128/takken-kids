@@ -151,7 +151,7 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',
 const $=s=>document.querySelector(s);
 
 // ---------- characters (placeholder SVG until the ChatGPT art is in chara/) ----------
-const NAMES={neko:'ニャンタ先生',get mirai(){return S.name||'あなた'}};
+const NAMES={neko:'コッカー先生',get mirai(){return S.name||'あなた'}};
 function face(who,f){
  const mouth={normal:'M42 70 Q50 76 58 70',happy:'M38 66 Q50 84 62 66 Z',surprise:'M50 66 m-6 0 a6 7 0 1 0 12 0 a6 7 0 1 0 -12 0',think:'M42 72 L58 70',sad:'M40 76 Q50 66 60 76'}[f]||'';
  const eyes=f==='happy'?'<path d="M30 50 Q36 43 42 50 M58 50 Q64 43 70 50" stroke="#3b2a1f" stroke-width="4" fill="none" stroke-linecap="round"/>':f==='surprise'?'<circle cx="36" cy="50" r="7" fill="#3b2a1f"/><circle cx="64" cy="50" r="7" fill="#3b2a1f"/>':'<circle cx="36" cy="50" r="5" fill="#3b2a1f"/><circle cx="64" cy="50" r="5" fill="#3b2a1f"/><circle cx="38" cy="48" r="1.6" fill="#fff"/><circle cx="66" cy="48" r="1.6" fill="#fff"/>';
@@ -160,7 +160,7 @@ function face(who,f){
  return `<svg viewBox="0 0 100 100"><circle cx="50" cy="52" r="40" fill="#5b3a29"/><circle cx="50" cy="58" r="32" fill="#ffe2c9"/><path d="M18 52 Q20 18 50 16 Q80 18 82 52 Q70 30 50 34 Q30 30 18 52Z" fill="#6b4431"/><circle cx="78" cy="30" r="8" fill="#ff6fa5"/><circle cx="30" cy="66" r="6" fill="#ffb3c7" opacity=".7"/><circle cx="70" cy="66" r="6" fill="#ffb3c7" opacity=".7"/>${eyes}${m}</svg>`;
 }
 // ChatGPT art goes in chara/<who>_<face>.png; until a file exists the SVG above is shown.
-function chara(who,f='normal',pop=false){if(who==='mirai')return `<span class="chara${pop?' pop':''}">${avatarHTML(S.look,myStage(),f,'bust')}</span>`;return `<span class="chara${pop?' pop':''}" data-who="${who}"><img src="chara/${who}_${f}.png" alt="${NAMES[who]}" style="width:100%;height:100%;object-fit:contain" onerror="this.outerHTML=face('${who}','${f}')"></span>`}
+function chara(who,f='normal',pop=false){if(who==='neko')return `<span class="chara${pop?' pop':''}"><div class="art bust"><img src="art/sensei_${['normal','happy','surprise','think','sad'].includes(f)?f:'normal'}.jpg" alt="${NAMES.neko}" style="width:100%;height:100%;object-fit:cover"></div></span>`;if(who==='mirai')return `<span class="chara${pop?' pop':''}">${avatarHTML(S.look,myStage(),f,'bust')}</span>`;return `<span class="chara${pop?' pop':''}" data-who="${who}"><img src="chara/${who}_${f}.png" alt="${NAMES[who]}" style="width:100%;height:100%;object-fit:contain" onerror="this.outerHTML=face('${who}','${f}')"></span>`}
 function say(who,f,html,pop){return `<div class="stage${who==='mirai'?' right':''}">${chara(who,f,pop)}<div class="bubble"><span class="name">${NAMES[who]}</span>${html}</div></div>`}
 
 // ---------- speech ----------
@@ -168,7 +168,7 @@ let voice=null;
 function pickVoice(){const v=speechSynthesis.getVoices().filter(v=>/^ja/i.test(v.lang));voice=v.find(v=>/Google|Kyoko|Nanami|Haruka/i.test(v.name))||v[0]||null}
 if('speechSynthesis' in window){pickVoice();speechSynthesis.onvoiceschanged=pickVoice}
 function plain(html){const d=document.createElement('div');d.innerHTML=html;d.querySelectorAll('rt').forEach(r=>r.remove());return d.textContent}
-function speak(html){if(!('speechSynthesis' in window))return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(plain(html).replace(/ニャ/g,'にゃ'));u.lang='ja-JP';u.rate=S.rate;if(voice)u.voice=voice;speechSynthesis.speak(u)}
+function speak(html){if(!('speechSynthesis' in window))return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(plain(html));u.lang='ja-JP';u.rate=S.rate;if(voice)u.voice=voice;speechSynthesis.speak(u)}
 
 // ---------- streak / rewards ----------
 function touchStreak(){const t=today(),y=new Date(Date.now()-864e5).toLocaleDateString('sv-SE');if(S.streak.last===t)return;S.streak.days=S.streak.last===y?S.streak.days+1:1;S.streak.last=t;save()}
@@ -190,14 +190,14 @@ function header(title,back){return `<div class="top">${back?`<button class="back
 function go(fn,...a){speechSynthesis?.cancel?.();window.scrollTo(0,0);fn(...a)}
 
 function welcome(){
- app.innerHTML=`<div style="margin:auto 0">${say('neko','happy','はじめまして！ぼくは<b>ニャンタ先生</b>。いっしょに<ruby>宅建<rt>たっけん</rt></ruby>の<ruby>勉強<rt>べんきょう</rt></ruby>をしようニャ！<br>きみの<ruby>名前<rt>なまえ</rt></ruby>をおしえて！',true)}<input class="field" id="nm" maxlength="10" placeholder="なまえ" autocomplete="off"><button class="big" id="ok">はじめる！</button></div>`;
+ app.innerHTML=`<div style="margin:auto 0">${say('neko','happy','はじめまして！ぼくは<b>コッカー先生</b>。いっしょに<ruby>宅建<rt>たっけん</rt></ruby>の<ruby>勉強<rt>べんきょう</rt></ruby>をしようワン！<br>きみの<ruby>名前<rt>なまえ</rt></ruby>をおしえて！',true)}<input class="field" id="nm" maxlength="10" placeholder="なまえ" autocomplete="off"><button class="big" id="ok">はじめる！</button></div>`;
  $('#ok').onclick=()=>{const v=$('#nm').value.trim();if(!v){$('#nm').focus();return}S.name=v;save();go(home)};
 }
 
 function home(){
  if(!S.name)return welcome();
  const ls=lessons(),done=ls.filter(l=>S.stars[l.id]!==undefined).length,nx=nextLesson(),lv=level(),got=Object.keys(S.words).length;
- const greet=done===0?`${esc(S.name)}ちゃん、まずは<ruby>最初<rt>さいしょ</rt></ruby>のレッスンからだニャ！`:S.streak.last===today()?`${esc(S.name)}ちゃん、<ruby>今日<rt>きょう</rt></ruby>もがんばってるね！えらいニャ！`:`おかえり、${esc(S.name)}ちゃん！<ruby>今日<rt>きょう</rt></ruby>は「${nx.titleHtml}」をやろうニャ！`;
+ const greet=done===0?`${esc(S.name)}ちゃん、まずは<ruby>最初<rt>さいしょ</rt></ruby>のレッスンからだワン！`:S.streak.last===today()?`${esc(S.name)}ちゃん、<ruby>今日<rt>きょう</rt></ruby>もがんばってるね！えらいワン！`:`おかえり、${esc(S.name)}ちゃん！<ruby>今日<rt>きょう</rt></ruby>は「${nx.titleHtml}」をやろうワン！`;
  app.innerHTML=`${header('たっけんクエスト')}<div class="stats"><span class="pill">🪙 ${S.coins}</span><span class="pill">🔥 ${S.streak.days}<small>日</small></span><span class="pill">⭐ ${Object.values(S.stars).reduce((a,b)=>a+b,0)}</span></div>
  <div class="hello">${say('neko',done?'happy':'normal',greet,true)}</div>
  <div class="lvl"><b>レベル ${lv}</b> <span class="muted">あと${100-S.xp%100}ポイントでレベルアップ</span><div class="bar"><i style="width:${S.xp%100}%"></i></div></div>
@@ -258,7 +258,7 @@ function result(){
  let fresh=[];
  if(Q.id){const l=lessons().find(l=>l.id===Q.id);if(star>0){S.stars[Q.id]=Math.max(S.stars[Q.id]??0,star);fresh=l.words.filter(w=>!S.words[w]);fresh.forEach(w=>S.words[w]=1)}}
  save();
- const msg=star===3?'ぜんもんせいかい！てんさいだニャ！':star>0?'クリア！よくがんばったニャ！':'おしい！もう1回やってみようニャ！';
+ const msg=star===3?'ぜんもんせいかい！てんさいだワン！':star>0?'クリア！よくがんばったワン！':'おしい！もう1回やってみようワン！';
  app.innerHTML=`${header('けっか')}${say('neko',star?'happy':'think',msg,true)}<div class="stars">${[0,1,2].map(i=>`<span class="${i<star?'':'off'}">⭐</span>`).join('')}</div>
  <div class="earn">${ok} / ${n} もんせいかい　🪙 +${coins}</div>
  ${fresh.length?`<div class="muted" style="text-align:center">あたらしい<ruby>言葉<rt>ことば</rt></ruby>カードをゲット！</div><div class="newwords">${fresh.map((w,i)=>`<button class="w" data-w="${esc(w)}" style="animation-delay:${i*.12}s"><ruby>${esc(w)}<rt>${esc(C.words[w].yomi)}</rt></ruby></button>`).join('')}</div>`:''}
@@ -269,7 +269,7 @@ function result(){
 
 function review(){
  const items=Object.values(S.miss||{});
- if(!items.length){app.innerHTML=`${header('ふくしゅう','go(home)')}${say('neko','happy','まちがえた<ruby>問題<rt>もんだい</rt></ruby>はないよ！すごいニャ！<br>レッスンでクイズをすると、まちがえた<ruby>問題<rt>もんだい</rt></ruby>がここにたまるよ。',true)}<button class="big" onclick="go(home)">ホームへ</button>`;return}
+ if(!items.length){app.innerHTML=`${header('ふくしゅう','go(home)')}${say('neko','happy','まちがえた<ruby>問題<rt>もんだい</rt></ruby>はないよ！すごいワン！<br>レッスンでクイズをすると、まちがえた<ruby>問題<rt>もんだい</rt></ruby>がここにたまるよ。',true)}<button class="big" onclick="go(home)">ホームへ</button>`;return}
  quiz(null,items.sort(()=>Math.random()-.5).slice(0,10),'ふくしゅう');
 }
 
@@ -281,7 +281,7 @@ function zukan(){
 function grown(st){
  S.seenStage=st;save();confetti();
  app.innerHTML=`${header('せいちょうした！')}<div class="growstage">${avatarHTML(S.look,st,'happy','full')}</div>
- ${say('neko','happy',`すごいニャ！${esc(S.name)}ちゃんは<b>${STAGES[st].name}</b>に<ruby>成長<rt>せいちょう</rt></ruby>したよ！<br>あたらしいアイテムが<ruby>買<rt>か</rt></ruby>えるようになったニャ！`,true)}
+ ${say('neko','happy',`すごいワン！${esc(S.name)}ちゃんは<b>${STAGES[st].name}</b>に<ruby>成長<rt>せいちょう</rt></ruby>したよ！<br>あたらしいアイテムが<ruby>買<rt>か</rt></ruby>えるようになったワン！`,true)}
  <button class="big" onclick="go(closet)">👗 きせかえを見る</button><div style="height:12px"></div><button class="sub" onclick="go(home)">ホームへ</button>`;
 }
 
