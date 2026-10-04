@@ -30,16 +30,17 @@ ITEMS.push(
  {id:'f_gears',cat:'fx',name:'ゼンマイと'+R('蝶','ちょう'),st:1,p:120,fx:'gears'},
  {id:'f_heart',cat:'fx',name:R('妖精','ようせい')+'の'+R('羽','はね'),st:0,p:150,fx:'wings'},
  {id:'f_star',cat:'fx',name:R('銀河','ぎんが')+'のオーラ',st:1,p:150,fx:'galaxy'},
- // pets at her feet
+ // pets at her feet: illustrated (art/pet, tools/petcut.py); ids kept from the emoji version so owned pets stay owned
  {id:'p_none',cat:'pet',name:'なし',st:0,p:0},
- {id:'p_cat',cat:'pet',name:'ねこ',st:0,p:100,e:'🐱'},
- {id:'p_rabbit',cat:'pet',name:'うさぎ',st:0,p:100,e:'🐰'},
- {id:'p_ham',cat:'pet',name:'ハムスター',st:0,p:100,e:'🐹'},
- {id:'p_dog',cat:'pet',name:'こいぬ',st:0,p:100,e:'🐶'},
- {id:'p_chick',cat:'pet',name:'ひよこ',st:0,p:80,e:'🐥'},
- {id:'p_panda',cat:'pet',name:'パンダ',st:1,p:150,e:'🐼'},
- {id:'p_penguin',cat:'pet',name:'ペンギン',st:1,p:150,e:'🐧'},
- {id:'p_uni',cat:'pet',name:'ユニコーン',st:2,p:200,e:'🦄'},
+ {id:'p_chick',cat:'pet',name:'メロディきのこ',st:0,p:80,img:'mushroom'},
+ {id:'p_cat',cat:'pet',name:'クローバーねこ',st:0,p:100,img:'clovercat'},
+ {id:'p_rabbit',cat:'pet',name:'さくらリス',st:0,p:100,img:'sakurasquirrel'},
+ {id:'p_ham',cat:'pet',name:'グミゴーレム',st:0,p:100,img:'gummy'},
+ {id:'p_penguin',cat:'pet',name:'シャボンこうもり',st:0,p:120,img:'bubblebat'},
+ {id:'p_lantern',cat:'pet',name:'ちょうちんトカゲ',st:0,p:120,img:'lantern'},
+ {id:'p_panda',cat:'pet',name:R('星空','ほしぞら')+'ふくろう',st:1,p:150,img:'owl'},
+ {id:'p_dog',cat:'pet',name:R('星','ほし')+'きつね',st:1,p:180,img:'starfox'},
+ {id:'p_uni',cat:'pet',name:'クリスタルのこ',st:2,p:200,img:'crystal'},
 );
 CATS.push(['fx','エフェクト'],['pet','おとも']);
 Object.assign(DEFAULT_LOOK,{fx:'f_none',pet:'p_none'});
@@ -77,7 +78,7 @@ function fxSprite(id,front){
 }
 const fxBack=id=>fxSprite(id,false),fxFront=id=>fxSprite(id,true);
 
-function petLayer(id){const it=ITEMS.find(i=>i.id===id);return it&&it.e?`<svg class="petl" viewBox="0 0 200 320" preserveAspectRatio="xMidYMid slice"><text x="12" y="306" font-size="38">${it.e}</text></svg>`:''}
+function petLayer(id){const it=ITEMS.find(i=>i.id===id);return it&&it.img?`<img class="petl" src="art/pet/${it.img}.png" alt="">`:''}
 
 // Illustrated worlds (Gemini sheet "小学5年生女子の好きな世界", cut by hand into art/bg/w_*.jpg)
 const WORLDS=[
