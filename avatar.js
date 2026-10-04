@@ -75,16 +75,19 @@ const SKIN='#ffe2c9',SKIN_D='#f5cbaa';
 // Illustrated outfits ("コーデ") drawn with Gemini. Once a stage has art, it replaces the SVG parts for that stage.
 // fx/fy: face centre as a fraction of the image, cw: width of the face crop (fraction of image width).
 const ART=[
- {id:'k_hoodie',st:0,name:'パーカーコーデ',p:0,file:'art/s1_coord1.png',fx:.48,fy:.16,cw:.6},
+ {id:'k_hoodie',st:0,name:'パーカーコーデ',p:0,file:'art/s1_coord1.png',fx:.51,fy:.163,cw:.6},
+ {id:'k_dress',st:0,name:'<ruby>水色<rt>みずいろ</rt></ruby>ワンピース',p:60,file:'art/s1_coord2.png',fx:.484,fy:.165,cw:.95},
+ {id:'k_border',st:0,name:'ボーダーT＆ショートパンツ',p:60,file:'art/s1_coord3.png',fx:.477,fy:.16,cw:1.2},
 ];
-// Face close-ups by expression, e.g. 's1_happy':'art/s1_happy.png'. Missing ones are cut from the outfit art.
-const ART_FACES=Object.fromEntries(['normal','happy','surprise','think','sad'].map(f=>['s1_'+f,'art/s1_'+f+'.jpg']));
+// Face close-ups per outfit and expression ('<coord id>_<face>'), so the clothes in the face always match.
+// Missing ones are cut from the outfit art itself.
+const ART_FACES=Object.fromEntries(['normal','happy','surprise','think','sad'].map(f=>['k_hoodie_'+f,'art/s1_'+f+'.jpg']));
 function artFor(look,stage){const mine=ART.filter(a=>a.st===stage);return mine.find(a=>a.id===look.coord)||mine[0]||null}
 function avatarHTML(look,stage,face='normal',crop='full'){
  const a=artFor({...DEFAULT_LOOK,...look},stage);
  if(!a)return avatarSVG(look,stage,face,crop);
  if(crop==='full')return `<div class="art full"><svg viewBox="0 0 200 320" preserveAspectRatio="xMidYMid slice">${bgLayer({...DEFAULT_LOOK,...look}.bg)}</svg><img src="${a.file}" alt=""></div>`;
- const f=ART_FACES[`s${stage+1}_${face}`];
+ const f=ART_FACES[`${a.id}_${face}`];
  if(f)return `<div class="art bust"><img src="${f}" alt="" style="width:100%;height:100%;object-fit:cover"></div>`;
  const w=100/a.cw;
  return `<div class="art bust"><img src="${a.file}" alt="" style="position:absolute;width:${w}%;left:${50-a.fx*w}%;top:calc(50% - ${a.fy} * ${w}% * var(--ar,2.8))" onload="this.style.setProperty('--ar',this.naturalHeight/this.naturalWidth)"></div>`;
