@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>たっけんクエスト</title>
+<meta name="theme-color" content="#ff8a3d">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#fff7ec;--ink:#3b2a1f;--muted:#8a7363;--orange:#ff8a3d;--orange-d:#e86a1c;--pink:#ff6fa5;--blue:#4aa8ff;--green:#2fbf71;--red:#ff5a5f;--yellow:#ffd23f;--card:#fff;--line:#f1dcc6;--shadow:0 4px 0 #f0d3b4}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"M PLUS Rounded 1c",system-ui,sans-serif;font-weight:500}
+body{min-height:100dvh;overscroll-behavior:none}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+ruby rt{font-size:.5em;color:var(--muted);font-weight:500}
+body.nofuri rt{display:none}
+.app{max-width:520px;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column;padding:0 16px calc(16px + env(safe-area-inset-bottom))}
+.top{display:flex;align-items:center;gap:8px;padding:12px 0;position:sticky;top:0;background:var(--bg);z-index:5}
+.top .back{width:44px;height:44px;border-radius:14px;background:#fff;box-shadow:var(--shadow);font-size:22px;font-weight:800}
+.top .ttl{flex:1;font-weight:800;font-size:18px;text-align:center}
+.pill{display:inline-flex;align-items:center;gap:5px;background:#fff;border-radius:999px;padding:6px 12px;box-shadow:var(--shadow);font-weight:800;font-size:15px}
+.big{display:block;width:100%;padding:18px;border-radius:20px;font-size:21px;font-weight:800;color:#fff;background:var(--orange);box-shadow:0 6px 0 var(--orange-d);transition:transform .08s}
+.big:active{transform:translateY(4px);box-shadow:0 2px 0 var(--orange-d)}
+.big.blue{background:var(--blue);box-shadow:0 6px 0 #2c84d8}.big.green{background:var(--green);box-shadow:0 6px 0 #1f9658}.big.gray{background:#d9cbbd;box-shadow:0 6px 0 #bfae9c}
+.sub{display:block;width:100%;padding:14px;border-radius:16px;font-size:17px;font-weight:800;background:#fff;box-shadow:var(--shadow)}
+/* character + bubble */
+.stage{display:flex;align-items:flex-end;gap:10px;margin:8px 0}
+.stage.right{flex-direction:row-reverse}
+.chara{width:110px;height:110px;flex-shrink:0;object-fit:contain;animation:bob 2.4s ease-in-out infinite}
+.chara.pop{animation:pop .35s ease-out,bob 2.4s ease-in-out .35s infinite}
+.bubble{position:relative;background:#fff;border-radius:22px;padding:14px 16px;font-size:18px;line-height:2.05;box-shadow:var(--shadow);flex:1}
+.bubble:after{content:"";position:absolute;left:-10px;bottom:22px;border:10px solid transparent;border-right-color:#fff;border-left:0}
+.stage.right .bubble:after{left:auto;right:-10px;border-right:0;border-left:10px solid #fff;border-left-color:#fff}
+.bubble .name{display:block;font-size:13px;font-weight:800;line-height:1.4;color:var(--orange-d)}
+.stage.right .bubble .name{color:#d1477f}
+.w{display:inline;padding:0 2px;margin:0 1px;border-radius:6px;background:#fff1b8;border-bottom:3px solid var(--yellow);font-weight:800;line-height:inherit}
+.point{background:linear-gradient(135deg,#fff3c4,#ffe0ec);border:3px solid var(--yellow);border-radius:22px;padding:18px;font-size:18px;line-height:2.1;margin:12px 0;box-shadow:var(--shadow)}
+.point b.lbl{display:inline-block;background:var(--pink);color:#fff;border-radius:999px;padding:0 12px;font-size:14px;line-height:1.9;margin-bottom:6px}
+@keyframes bob{50%{transform:translateY(-6px)}}
+@keyframes pop{0%{transform:scale(.6)}70%{transform:scale(1.1)}100%{transform:scale(1)}}
+@keyframes shake{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+/* home */
+.hello{margin:6px 0 18px}
+.stats{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.lvl{background:#fff;border-radius:18px;padding:12px 14px;box-shadow:var(--shadow);margin:14px 0}
+.lvl .bar{height:14px;border-radius:999px;background:#f3e6d8;overflow:hidden;margin-top:8px}.lvl .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--yellow),var(--orange));border-radius:999px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.tile{background:#fff;border-radius:20px;padding:16px 10px;box-shadow:var(--shadow);font-weight:800;font-size:16px;text-align:center}
+.tile .ic{font-size:34px;display:block;margin-bottom:4px}
+.count{font-size:13px;color:var(--muted);text-align:center;margin-top:16px}
+/* map */
+.chap{border-radius:24px;padding:16px;margin:10px 0 18px;color:#fff;box-shadow:0 6px 0 rgba(0,0,0,.12)}
+.chap h2{margin:0;font-size:22px}.chap p{margin:4px 0 0;font-size:14px;opacity:.95}
+.path{display:flex;flex-direction:column;align-items:center;gap:58px;padding:6px 0 50px}.chap rt{color:#fff;opacity:.9}
+.node{width:86px;height:86px;border-radius:50%;background:#fff;box-shadow:0 6px 0 #e7cdb1;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:800;font-size:24px;position:relative}
+.node:nth-child(4n+2){transform:translateX(60px)}.node:nth-child(4n+4){transform:translateX(-60px)}
+.node.open{background:var(--orange);color:#fff;box-shadow:0 6px 0 var(--orange-d);animation:pulse 1.6s ease-in-out infinite}
+.node.done{background:var(--green);color:#fff;box-shadow:0 6px 0 #1f9658}
+.node.lock{opacity:.5}
+.node small{font-size:11px;letter-spacing:-1px}
+.node .lbl{position:absolute;top:92px;width:150px;text-align:center;font-size:13px;color:var(--ink);line-height:1.5}
+@keyframes pulse{50%{box-shadow:0 6px 0 var(--orange-d),0 0 0 10px rgba(255,138,61,.25)}}
+/* lesson */
+.prog{height:12px;background:#f3e6d8;border-radius:999px;overflow:hidden;flex:1}.prog i{display:block;height:100%;background:var(--green);border-radius:999px;transition:width .3s}
+.lesson{flex:1;display:flex;flex-direction:column;justify-content:center}
+.tapnext{margin-top:auto;padding-top:14px;display:flex;gap:10px}
+.tapnext .sub{width:auto;flex:0 0 64px;font-size:22px}
+/* quiz */
+.qcard{background:#fff;border-radius:24px;padding:20px;font-size:20px;line-height:2.1;box-shadow:var(--shadow);margin:6px 0 16px;min-height:150px}
+.qno{font-size:14px;color:var(--muted);font-weight:800}
+.ox{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.ox button{height:120px;border-radius:26px;font-size:64px;font-weight:800;color:#fff}
+.ox .o{background:var(--blue);box-shadow:0 7px 0 #2c84d8}.ox .x{background:var(--red);box-shadow:0 7px 0 #d23c41}
+.ox button:active{transform:translateY(4px)}
+.fb{border-radius:22px;padding:14px 16px;margin-top:6px;font-size:17px;line-height:2}
+.fb.ok{background:#dcf7e8;border:3px solid var(--green)}.fb.ng{background:#ffe3e3;border:3px solid var(--red);animation:shake .4s}
+.fb h3{margin:0 0 4px;font-size:22px}
+.combo{font-weight:800;color:var(--pink);text-align:center;font-size:18px;min-height:26px}
+/* result */
+.stars{font-size:58px;text-align:center;letter-spacing:6px;margin:6px 0}
+.stars span{display:inline-block;animation:pop .4s both}.stars span:nth-child(2){animation-delay:.2s}.stars span:nth-child(3){animation-delay:.4s}
+.stars .off{filter:grayscale(1);opacity:.3}
+.earn{text-align:center;font-size:20px;font-weight:800;margin:6px 0 14px}
+.newwords{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:10px 0 18px}
+.newwords button{background:#fff;border-radius:14px;padding:8px 12px;box-shadow:var(--shadow);font-weight:800;font-size:16px;line-height:1.9;animation:pop .4s both}
+/* zukan */
+.cards{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;padding-bottom:20px}
+.card{background:#fff;border-radius:18px;padding:14px 8px;box-shadow:var(--shadow);text-align:center;font-weight:800;font-size:17px;line-height:1.9;min-height:92px;display:flex;align-items:center;justify-content:center}
+.card.lock{background:#f3e6d8;color:#c9b29c;font-size:30px;box-shadow:none}
+/* sheet */
+.shade{position:fixed;inset:0;background:rgba(59,42,31,.45);z-index:20;display:flex;align-items:flex-end;justify-content:center;animation:fade .15s}
+.sheet{background:#fff;width:100%;max-width:520px;border-radius:28px 28px 0 0;padding:22px 20px calc(22px + env(safe-area-inset-bottom));animation:up .2s ease-out;max-height:85dvh;overflow:auto}
+.sheet h2{margin:0;font-size:30px;line-height:2.2}
+.sheet .yomi{color:var(--muted);font-size:15px}
+.sheet .mean{font-size:18px;line-height:2.05;margin:10px 0}
+.sheet .tatoe{background:#fff3c4;border-radius:16px;padding:12px 14px;font-size:17px;line-height:2}
+.sheet .row{display:flex;gap:10px;margin-top:16px}
+@keyframes fade{from{opacity:0}}@keyframes up{from{transform:translateY(40px);opacity:.5}}
+.confetti{position:fixed;inset:0;pointer-events:none;z-index:30;overflow:hidden}
+.confetti i{position:absolute;top:-20px;width:10px;height:16px;border-radius:3px;animation:fall 1.8s ease-in forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
+.field{display:block;width:100%;font:inherit;font-size:22px;padding:14px;border-radius:16px;border:3px solid var(--line);margin:10px 0 18px;text-align:center}
+.set{background:#fff;border-radius:18px;padding:14px 16px;box-shadow:var(--shadow);margin-bottom:14px;font-size:17px}
+.set label{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.set input[type=range]{width:55%}.set input[type=checkbox]{width:26px;height:26px}
+.muted{color:var(--muted);font-size:14px;line-height:1.8}
+@media(prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+<script>
+'use strict';
+// ---------- data & progress ----------
+let C=null; // course.json
+const KEY='tk_v1';
+const S=Object.assign({name:'',coins:0,xp:0,stars:{},best:{},words:{},streak:{last:'',days:0},rate:0.95,furi:true},load());
+function load(){try{return JSON.parse(localStorage.getItem(KEY))||{}}catch{return {}}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch{}}
+const today=()=>new Date().toLocaleDateString('sv-SE');
+const lessons=()=>C.chapters.flatMap(c=>c.lessons.map(l=>({...l,ch:c})));
+const level=()=>Math.floor(S.xp/100)+1;
+const isOpen=id=>{const ls=lessons(),i=ls.findIndex(l=>l.id===id);return i===0||S.stars[ls[i-1].id]!==undefined};
+const nextLesson=()=>lessons().find(l=>S.stars[l.id]===undefined)||lessons()[0];
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const $=s=>document.querySelector(s);
+
+// ---------- characters (placeholder SVG until the ChatGPT art is in chara/) ----------
+const NAMES={neko:'ニャンタ先生',mirai:'ミライ'};
+function face(who,f){
+ const mouth={normal:'M42 70 Q50 76 58 70',happy:'M38 66 Q50 84 62 66 Z',surprise:'M50 66 m-6 0 a6 7 0 1 0 12 0 a6 7 0 1 0 -12 0',think:'M42 72 L58 70',sad:'M40 76 Q50 66 60 76'}[f]||'';
+ const eyes=f==='happy'?'<path d="M30 50 Q36 43 42 50 M58 50 Q64 43 70 50" stroke="#3b2a1f" stroke-width="4" fill="none" stroke-linecap="round"/>':f==='surprise'?'<circle cx="36" cy="50" r="7" fill="#3b2a1f"/><circle cx="64" cy="50" r="7" fill="#3b2a1f"/>':'<circle cx="36" cy="50" r="5" fill="#3b2a1f"/><circle cx="64" cy="50" r="5" fill="#3b2a1f"/><circle cx="38" cy="48" r="1.6" fill="#fff"/><circle cx="66" cy="48" r="1.6" fill="#fff"/>';
+ const m=`<path d="${mouth}" stroke="#3b2a1f" stroke-width="3.5" fill="${f==='happy'?'#ff8fa3':'none'}" stroke-linecap="round"/>`;
+ if(who==='neko')return `<svg viewBox="0 0 100 100"><path d="M18 40 L22 8 L44 28 Z M82 40 L78 8 L56 28 Z" fill="#ffa95c"/><circle cx="50" cy="56" r="38" fill="#ffb877"/><path d="M20 30 L24 14 L36 26Z M80 30 L76 14 L64 26Z" fill="#ffd6e0"/>${eyes}<circle cx="36" cy="50" r="12" fill="none" stroke="#5b4636" stroke-width="3"/><circle cx="64" cy="50" r="12" fill="none" stroke="#5b4636" stroke-width="3"/><path d="M48 50 L52 50" stroke="#5b4636" stroke-width="3"/><path d="M47 60 L53 60 L50 64Z" fill="#ff6f91"/>${m}<path d="M14 60 L30 62 M14 68 L30 66 M86 60 L70 62 M86 68 L70 66" stroke="#c97a3d" stroke-width="2"/></svg>`;
+ return `<svg viewBox="0 0 100 100"><circle cx="50" cy="52" r="40" fill="#5b3a29"/><circle cx="50" cy="58" r="32" fill="#ffe2c9"/><path d="M18 52 Q20 18 50 16 Q80 18 82 52 Q70 30 50 34 Q30 30 18 52Z" fill="#6b4431"/><circle cx="78" cy="30" r="8" fill="#ff6fa5"/><circle cx="30" cy="66" r="6" fill="#ffb3c7" opacity=".7"/><circle cx="70" cy="66" r="6" fill="#ffb3c7" opacity=".7"/>${eyes}${m}</svg>`;
+}
+// ChatGPT art goes in chara/<who>_<face>.png; until a file exists the SVG above is shown.
+function chara(who,f='normal',pop=false){return `<span class="chara${pop?' pop':''}" data-who="${who}"><img src="chara/${who}_${f}.png" alt="${NAMES[who]}" style="width:100%;height:100%;object-fit:contain" onerror="this.outerHTML=face('${who}','${f}')"></span>`}
+function say(who,f,html,pop){return `<div class="stage${who==='mirai'?' right':''}">${chara(who,f,pop)}<div class="bubble"><span class="name">${NAMES[who]}</span>${html}</div></div>`}
+
+// ---------- speech ----------
+let voice=null;
+function pickVoice(){const v=speechSynthesis.getVoices().filter(v=>/^ja/i.test(v.lang));voice=v.find(v=>/Google|Kyoko|Nanami|Haruka/i.test(v.name))||v[0]||null}
+if('speechSynthesis' in window){pickVoice();speechSynthesis.onvoiceschanged=pickVoice}
+function plain(html){const d=document.createElement('div');d.innerHTML=html;d.querySelectorAll('rt').forEach(r=>r.remove());return d.textContent}
+function speak(html){if(!('speechSynthesis' in window))return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(plain(html).replace(/ニャ/g,'にゃ'));u.lang='ja-JP';u.rate=S.rate;if(voice)u.voice=voice;speechSynthesis.speak(u)}
+
+// ---------- streak / rewards ----------
+function touchStreak(){const t=today(),y=new Date(Date.now()-864e5).toLocaleDateString('sv-SE');if(S.streak.last===t)return;S.streak.days=S.streak.last===y?S.streak.days+1:1;S.streak.last=t;save()}
+function confetti(){const c=document.createElement('div');c.className='confetti';const col=['#ff8a3d','#ffd23f','#ff6fa5','#4aa8ff','#2fbf71'];for(let i=0;i<60;i++){const e=document.createElement('i');e.style.left=Math.random()*100+'%';e.style.background=col[i%5];e.style.animationDelay=Math.random()*.6+'s';e.style.animationDuration=1.4+Math.random()*1.2+'s';c.appendChild(e)}document.body.appendChild(c);setTimeout(()=>c.remove(),3200)}
+
+// ---------- word sheet ----------
+function wordSheet(t){
+ const w=C.words[t];if(!w)return;speechSynthesis?.cancel?.();
+ const sh=document.createElement('div');sh.className='shade';
+ sh.innerHTML=`<div class="sheet" role="dialog" aria-label="${esc(t)}"><h2><ruby>${esc(t)}<rt>${esc(w.yomi)}</rt></ruby></h2><div class="mean">${w.meanHtml}</div><div class="tatoe">💡 たとえば…<br>${w.tatoeHtml}</div><div class="row"><button class="sub" data-say>🔊 よむ</button><button class="big" data-close style="font-size:18px;padding:14px">わかった！</button></div></div>`;
+ sh.addEventListener('click',e=>{if(e.target===sh||e.target.closest('[data-close]'))sh.remove();if(e.target.closest('[data-say]'))speak(`${w.yomi}。${w.meanHtml}。たとえば、${w.tatoeHtml}`)});
+ document.body.appendChild(sh);
+}
+document.addEventListener('click',e=>{const b=e.target.closest('.w');if(b){e.stopPropagation();wordSheet(b.dataset.w)}});
+
+// ---------- screens ----------
+const app=$('#app');
+function header(title,back){return `<div class="top">${back?`<button class="back" onclick="${back}" aria-label="もどる">‹</button>`:''}<div class="ttl">${title}</div>${back?'<span style="width:44px"></span>':''}</div>`}
+function go(fn,...a){speechSynthesis?.cancel?.();window.scrollTo(0,0);fn(...a)}
+
+function welcome(){
+ app.innerHTML=`<div style="margin:auto 0">${say('neko','happy','はじめまして！ぼくは<b>ニャンタ先生</b>。いっしょに<ruby>宅建<rt>たっけん</rt></ruby>の<ruby>勉強<rt>べんきょう</rt></ruby>をしようニャ！<br>きみの<ruby>名前<rt>なまえ</rt></ruby>をおしえて！',true)}<input class="field" id="nm" maxlength="10" placeholder="なまえ" autocomplete="off"><button class="big" id="ok">はじめる！</button></div>`;
+ $('#ok').onclick=()=>{const v=$('#nm').value.trim();if(!v){$('#nm').focus();return}S.name=v;save();go(home)};
+}
+
+function home(){
+ if(!S.name)return welcome();
+ const ls=lessons(),done=ls.filter(l=>S.stars[l.id]!==undefined).length,nx=nextLesson(),lv=level(),got=Object.keys(S.words).length;
+ const greet=done===0?`${esc(S.name)}ちゃん、まずは<ruby>最初<rt>さいしょ</rt></ruby>のレッスンからだニャ！`:S.streak.last===today()?`${esc(S.name)}ちゃん、<ruby>今日<rt>きょう</rt></ruby>もがんばってるね！えらいニャ！`:`おかえり、${esc(S.name)}ちゃん！<ruby>今日<rt>きょう</rt></ruby>は「${nx.titleHtml}」をやろうニャ！`;
+ app.innerHTML=`${header('たっけんクエスト')}<div class="stats"><span class="pill">🪙 ${S.coins}</span><span class="pill">🔥 ${S.streak.days}<small>日</small></span><span class="pill">⭐ ${Object.values(S.stars).reduce((a,b)=>a+b,0)}</span></div>
+ <div class="hello">${say('neko',done?'happy':'normal',greet,true)}</div>
+ <div class="lvl"><b>レベル ${lv}</b> <span class="muted">あと${100-S.xp%100}ポイントでレベルアップ</span><div class="bar"><i style="width:${S.xp%100}%"></i></div></div>
+ <button class="big" onclick="go(lesson,'${nx.id}')">▶ 「${nx.titleHtml}」をはじめる</button>
+ <div class="grid2"><button class="tile" onclick="go(map)"><span class="ic">🗺️</span>ステージ</button><button class="tile" onclick="go(zukan)"><span class="ic">📘</span><ruby>言葉<rt>ことば</rt></ruby>ずかん<br><small class="muted">${got} / ${Object.keys(C.words).length}</small></button></div>
+ <div class="grid2"><button class="tile" onclick="go(review)"><span class="ic">🔁</span>ふくしゅう</button><button class="tile" onclick="go(settings)"><span class="ic">⚙️</span>せってい</button></div>
+ <p class="count">クリアしたレッスン ${done} / ${ls.length}</p>`;
+}
+
+function map(){
+ let h=header('ステージ','go(home)');
+ for(const c of C.chapters){
+  h+=`<div class="chap" style="background:${c.color}"><h2>${c.titleHtml}</h2><p>${c.subtitleHtml}</p></div><div class="path">`;
+  c.lessons.forEach((l,i)=>{const st=S.stars[l.id],open=isOpen(l.id);h+=`<button class="node ${st!==undefined?'done':open?'open':'lock'}" ${open?`onclick="go(lesson,'${l.id}')"`:'disabled'} aria-label="${esc(l.title)}">${st!==undefined?'★'.repeat(st)||'✓':open?i+1:'🔒'}<span class="lbl">${l.titleHtml}</span></button>`});
+  h+='</div><div style="height:30px"></div>';
+ }
+ app.innerHTML=h;
+}
+
+function lesson(id,idx=0){
+ const l=lessons().find(l=>l.id===id),p=l.panels[idx],last=idx===l.panels.length-1;
+ const body=p.who==='point'?`<div class="point"><b class="lbl">ここがポイント！</b><br>${p.html}</div>${chara('neko','happy',true)}`:say(p.who,p.face||'normal',p.html,true);
+ app.innerHTML=`<div class="top"><button class="back" onclick="go(home)" aria-label="やめる">×</button><div class="prog"><i style="width:${(idx+1)/l.panels.length*100}%"></i></div><button class="back" onclick="speak(document.querySelector('.lesson').innerHTML)" aria-label="よみあげ">🔊</button></div>
+ <div class="muted" style="text-align:center">${l.titleHtml}</div><div class="lesson">${body}</div>
+ <p class="muted" style="text-align:center">きいろの<ruby>言葉<rt>ことば</rt></ruby>をタップすると<ruby>意味<rt>いみ</rt></ruby>が出るよ</p>
+ <div class="tapnext">${idx>0?`<button class="sub" onclick="go(lesson,'${id}',${idx-1})" aria-label="まえへ">‹</button>`:''}<button class="big ${last?'green':''}" onclick="${last?`go(quiz,'${id}')`:`go(lesson,'${id}',${idx+1})`}">${last?'クイズにちょうせん！':'つぎへ ›'}</button></div>`;
+ if(S.autoRead)speak($('.lesson').innerHTML);
+}
+
+let Q=null;
+function quiz(id,items,title){
+ const l=id&&lessons().find(l=>l.id===id);
+ Q={id,list:items||l.quiz.map(q=>({...q,from:id})),i:0,ok:0,combo:0,miss:[],title:title||l.titleHtml};
+ qShow();
+}
+function qShow(){
+ const q=Q.list[Q.i];
+ app.innerHTML=`<div class="top"><button class="back" onclick="go(home)" aria-label="やめる">×</button><div class="prog"><i style="width:${Q.i/Q.list.length*100}%"></i></div><button class="back" onclick="speak(Q.list[Q.i].qHtml)" aria-label="よみあげ">🔊</button></div>
+ <div class="qno">もんだい ${Q.i+1} / ${Q.list.length}　<span class="muted">${Q.title}</span></div><div class="qcard">${q.qHtml}</div>
+ <div class="combo">${Q.combo>=2?`🔥 ${Q.combo}れんぞく せいかい！`:''}</div>
+ <div id="ans"><div class="ox"><button class="o" onclick="qAnswer(true)" aria-label="まる">○</button><button class="x" onclick="qAnswer(false)" aria-label="ばつ">×</button></div></div>`;
+}
+function qAnswer(v){
+ const q=Q.list[Q.i],ok=v===q.a;
+ if(ok){Q.ok++;Q.combo++}else{Q.combo=0;Q.miss.push(q)}
+ $('#ans').innerHTML=`<div class="fb ${ok?'ok':'ng'}"><div class="stage">${chara('neko',ok?'happy':'sad',true)}<div><h3>${ok?'せいかい！':'ざんねん…'}</h3><div>こたえは <b style="font-size:24px">${q.a?'○':'×'}</b></div></div></div><div>${q.whyHtml}</div></div><div style="height:14px"></div><button class="big ${ok?'green':'blue'}" onclick="qNext()">${Q.i+1<Q.list.length?'つぎのもんだい ›':'けっかを見る'}</button>`;
+ if(!ok)speak(q.whyHtml);
+}
+function qNext(){Q.i++;if(Q.i<Q.list.length)return qShow();result()}
+
+function result(){
+ const n=Q.list.length,ok=Q.ok,star=ok===n?3:ok>=n-1?2:ok>=n-2?1:0,coins=ok*10+(star===3?20:0);
+ S.coins+=coins;S.xp+=ok*10;touchStreak();
+ // Missed questions go to review; a correct answer in review removes them.
+ S.miss=S.miss||{};for(const q of Q.miss)S.miss[q.qHtml]={...q};for(const q of Q.list)if(!Q.miss.includes(q))delete S.miss[q.qHtml];
+ let fresh=[];
+ if(Q.id){const l=lessons().find(l=>l.id===Q.id);if(star>0){S.stars[Q.id]=Math.max(S.stars[Q.id]??0,star);fresh=l.words.filter(w=>!S.words[w]);fresh.forEach(w=>S.words[w]=1)}}
+ save();
+ const msg=star===3?'ぜんもんせいかい！てんさいだニャ！':star>0?'クリア！よくがんばったニャ！':'おしい！もう1回やってみようニャ！';
+ app.innerHTML=`${header('けっか')}${say('neko',star?'happy':'think',msg,true)}<div class="stars">${[0,1,2].map(i=>`<span class="${i<star?'':'off'}">⭐</span>`).join('')}</div>
+ <div class="earn">${ok} / ${n} もんせいかい　🪙 +${coins}</div>
+ ${fresh.length?`<div class="muted" style="text-align:center">あたらしい<ruby>言葉<rt>ことば</rt></ruby>カードをゲット！</div><div class="newwords">${fresh.map((w,i)=>`<button class="w" data-w="${esc(w)}" style="animation-delay:${i*.12}s"><ruby>${esc(w)}<rt>${esc(C.words[w].yomi)}</rt></ruby></button>`).join('')}</div>`:''}
+ ${star===0&&Q.id?`<button class="big" onclick="go(quiz,'${Q.id}')">もう1回クイズ</button><div style="height:12px"></div><button class="sub" onclick="go(lesson,'${Q.id}')">レッスンを見なおす</button>`:`<button class="big" onclick="go(home)">ホームへ</button><div style="height:12px"></div><button class="sub" onclick="go(map)">ステージを見る</button>`}`;
+ if(star>0)confetti();
+}
+
+function review(){
+ const items=Object.values(S.miss||{});
+ if(!items.length){app.innerHTML=`${header('ふくしゅう','go(home)')}${say('neko','happy','まちがえた<ruby>問題<rt>もんだい</rt></ruby>はないよ！すごいニャ！<br>レッスンでクイズをすると、まちがえた<ruby>問題<rt>もんだい</rt></ruby>がここにたまるよ。',true)}<button class="big" onclick="go(home)">ホームへ</button>`;return}
+ quiz(null,items.sort(()=>Math.random()-.5).slice(0,10),'ふくしゅう');
+}
+
+function zukan(){
+ const all=Object.keys(C.words);
+ app.innerHTML=`${header('ことばずかん','go(home)')}<p class="muted" style="text-align:center">レッスンをクリアするとカードがふえるよ（${Object.keys(S.words).length} / ${all.length}）</p><div class="cards">${all.map(w=>S.words[w]?`<button class="card w" data-w="${esc(w)}" style="background:#fff;border:0"><ruby>${esc(w)}<rt>${esc(C.words[w].yomi)}</rt></ruby></button>`:'<div class="card lock">？</div>').join('')}</div>`;
+}
+
+function settings(){
+ app.innerHTML=`${header('せってい','go(home)')}
+ <div class="set"><label>なまえ<input class="field" id="nm" value="${esc(S.name)}" maxlength="10" style="margin:0;width:55%;font-size:18px;padding:8px"></label></div>
+ <div class="set"><label>ふりがなを出す<input type="checkbox" id="fu" ${S.furi?'checked':''}></label></div>
+ <div class="set"><label>レッスンを<ruby>自動<rt>じどう</rt></ruby>でよみあげ<input type="checkbox" id="ar" ${S.autoRead?'checked':''}></label></div>
+ <div class="set"><label>よみあげの<ruby>速<rt>はや</rt></ruby>さ<input type="range" id="rt" min="0.6" max="1.3" step="0.05" value="${S.rate}"></label><button class="sub" style="margin-top:10px" onclick="speak('たっけんクエストへようこそ。いっしょにがんばろう。')">🔊 ためしによむ</button></div>
+ <button class="big" onclick="setSave()">ほぞんする</button>
+ <p class="muted" style="margin-top:24px">きろくはこのスマホの中だけにほぞんされます。</p>`;
+}
+function setSave(){S.name=$('#nm').value.trim()||S.name;S.furi=$('#fu').checked;S.autoRead=$('#ar').checked;S.rate=+$('#rt').value;save();applyFuri();go(home)}
+function applyFuri(){document.body.classList.toggle('nofuri',!S.furi)}
+
+// ---------- start ----------
+fetch('data/course.json',{cache:'no-cache'}).then(r=>r.json()).then(d=>{C=d;applyFuri();home()}).catch(()=>{app.innerHTML='<p style="margin:auto;text-align:center">よみこみに<ruby>失敗<rt>しっぱい</rt></ruby>しました。<br>もう<ruby>一度<rt>いちど</rt></ruby>ひらいてね。</p>'});
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
