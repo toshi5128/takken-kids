@@ -79,10 +79,11 @@ const ART=[
  {id:'k_dress',st:0,name:'<ruby>水色<rt>みずいろ</rt></ruby>ワンピース',p:60,file:'art/s1_coord2.png',fx:.484,fy:.165,cw:.95},
  {id:'k_border',st:0,name:'ボーダーT＆ショートパンツ',p:60,file:'art/s1_coord3.png',fx:.477,fy:.16,cw:1.2},
  {id:'m_sailor',st:1,name:'セーラー<ruby>服<rt>ふく</rt></ruby>',p:0,file:'art/s2_coord1.png',fx:.474,fy:.15,cw:.66},
+ {id:'g_uniform',st:2,name:'<ruby>制服<rt>せいふく</rt></ruby>ギャル',p:0,file:'art/s3_coord1.png',fx:.502,fy:.145,cw:.64},
 ];
 // Face close-ups per outfit and expression ('<coord id>_<face>'), so the clothes in the face always match.
 // Missing ones are cut from the outfit art itself.
-const ART_FACES=Object.fromEntries(['normal','happy','surprise','think','sad'].flatMap(f=>[['k_hoodie_'+f,'art/s1_'+f+'.jpg'],['m_sailor_'+f,'art/s2_'+f+'.jpg']]));
+const ART_FACES=Object.fromEntries(['normal','happy','surprise','think','sad'].flatMap(f=>[['k_hoodie_'+f,'art/s1_'+f+'.jpg'],['m_sailor_'+f,'art/s2_'+f+'.jpg'],['g_uniform_'+f,'art/s3_'+f+'.jpg']]));
 function artFor(look,stage){const mine=ART.filter(a=>a.st===stage);return mine.find(a=>a.id===look.coord)||mine[0]||null}
 function avatarHTML(look,stage,face='normal',crop='full'){
  const a=artFor({...DEFAULT_LOOK,...look},stage);
