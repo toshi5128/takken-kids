@@ -67,3 +67,15 @@ function fxLayer(id){
  return `<svg class="fx" viewBox="0 0 200 320" preserveAspectRatio="xMidYMid slice">${spots.map(([x,y],i)=>`<text x="${x}" y="${y}" font-size="${16+(i%3)*5}" style="animation-delay:${i*.35}s">${it.e[i%it.e.length]}</text>`).join('')}</svg>`;
 }
 function petLayer(id){const it=ITEMS.find(i=>i.id===id);return it&&it.e?`<svg class="petl" viewBox="0 0 200 320" preserveAspectRatio="xMidYMid slice"><text x="12" y="306" font-size="38">${it.e}</text></svg>`:''}
+
+// Illustrated worlds (Gemini sheet "小学5年生女子の好きな世界", cut by hand into art/bg/w_*.jpg)
+const WORLDS=[
+ ['gummy','グミベアワンダーランド',80],['unicorn','ユニコーンの'+R('夢','ゆめ')+'のお'+R('城','しろ'),120],['cyber','サイバーカフェ',100],
+ ['planet','うかぶプラネタリウム',120],['mermaid','マーメイド'+R('学園','がくえん'),150],['animal','どうぶつの'+R('村','むら'),80],
+ ['booknook','まほうの'+R('本','ほん')+'の'+R('木','き'),100],['crystal','クリスタルの'+R('森','もり'),120],['skycarnival',''+R('空','そら')+'のカーニバル',150],
+ ['treehouse','ひみつのツリーハウス',100],
+];
+for(const [id,name,p] of WORLDS){
+ ITEMS.push({id:'w_'+id,cat:'bg',name,st:0,p});
+ BG_SCENES['w_'+id]=`<image href="art/bg/w_${id}.jpg" width="200" height="320" preserveAspectRatio="xMidYMid slice"/>`;
+}
