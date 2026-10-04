@@ -5,6 +5,7 @@
 - 内容は `content/` に普通の文章で書く → `python tools/build.py` で `data/course.json` を作る
   - 漢字にはすべてふりがなを自動で付ける（読みの間違いは build.py の READING_FIX で直す。`--check` で全読みを表示）
   - `content/words.json` の言葉は本文中で黄色になり、タップで意味とたとえが出る（言葉ずかんのカードにもなる）
-- キャラクターの絵は `chara/<neko|mirai>_<normal|happy|surprise|think|sad>.png`。無いあいだはSVGの仮の絵を表示
+- 生徒役は本人の分身キャラ（avatar.js・SVGの重ね描き）。レベルで小学生→中学生(Lv5)→高校生ギャル(Lv10)に成長し、コインで服・髪・ネイル等をきせかえ。確認用 tools/gallery.html
+- 先生の絵は `chara/neko_<face>.png` を置けば差し替わる（無ければSVG）
 - 記録はスマホの中（localStorage）だけ。名前もアプリ内に保存し、ソースには書かない
 - 問題・解説はすべてオリジナル（教科書・過去問の転載ではない）

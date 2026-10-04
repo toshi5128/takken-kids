@@ -108,17 +108,34 @@ body.nofuri rt{display:none}
 .set label{display:flex;justify-content:space-between;align-items:center;gap:10px}
 .set input[type=range]{width:55%}.set input[type=checkbox]{width:26px;height:26px}
 .muted{color:var(--muted);font-size:14px;line-height:1.8}
+.me{display:flex;gap:12px;align-items:center;width:100%;background:#fff;border-radius:22px;padding:10px 14px;box-shadow:var(--shadow);margin:0 0 16px;text-align:left}
+.mefig{width:96px;height:150px;flex-shrink:0;border-radius:16px;overflow:hidden}.mefig svg,.growstage svg,.closet-fig svg{width:100%;height:100%;display:block}
+.mecopy{display:flex;flex-direction:column;gap:2px;align-items:flex-start}.mecopy b{font-size:20px}.mecopy small{font-size:13px;color:var(--muted);line-height:1.9}
+.stg{display:inline-block;background:var(--pink);color:#fff;border-radius:999px;padding:2px 10px;font-size:13px;font-weight:800}
+.chara svg{width:100%;height:100%;border-radius:50%;background:#fff;box-shadow:var(--shadow)}
+.chara[data-who] svg{border-radius:0;background:none;box-shadow:none}
+.growstage{width:180px;height:288px;margin:4px auto;border-radius:24px;overflow:hidden;animation:pop .5s}
+.closet-top{display:flex;gap:12px;align-items:stretch}.closet-fig{width:58%;aspect-ratio:200/320;border-radius:22px;overflow:hidden;box-shadow:var(--shadow)}
+.closet-side{flex:1;display:flex;flex-direction:column;gap:10px;align-items:stretch;justify-content:flex-start}.closet-side .stg{text-align:center}
+.tryon{background:#fff;border-radius:16px;padding:10px;text-align:center;font-weight:800;box-shadow:var(--shadow);line-height:1.6}
+.big:disabled{background:#d9cbbd;box-shadow:0 6px 0 #bfae9c}
+.ctabs{display:flex;gap:8px;overflow-x:auto;padding:16px 0 10px;scrollbar-width:none}.ctabs button{flex:0 0 auto;padding:8px 14px;border-radius:999px;background:#fff;box-shadow:var(--shadow);font-weight:800;font-size:15px}.ctabs .on{background:var(--pink);color:#fff;box-shadow:0 4px 0 #d1477f}
+.shelf{display:grid;grid-template-columns:1fr 1fr;gap:10px}.it{background:#fff;border-radius:16px;padding:12px 8px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:2px;font-weight:800;font-size:15px}.it small{font-size:12px;color:var(--muted)}.it.on{outline:3px solid var(--pink)}.it.lock{opacity:.55}
+.toast{position:fixed;left:50%;bottom:calc(30px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:#fff;border-radius:16px;padding:12px 18px;font-weight:800;z-index:40;max-width:90%;text-align:center;line-height:2;animation:up .2s}
+.toast rt{color:#fff}
 @media(prefers-reduced-motion:reduce){*{animation:none!important}}
 </style>
 </head>
 <body>
 <div class="app" id="app"></div>
+<script src="avatar.js"></script>
 <script>
 'use strict';
 // ---------- data & progress ----------
 let C=null; // course.json
 const KEY='tk_v1';
-const S=Object.assign({name:'',coins:0,xp:0,stars:{},best:{},words:{},streak:{last:'',days:0},rate:0.95,furi:true},load());
+const S=Object.assign({name:'',coins:0,xp:0,stars:{},best:{},words:{},streak:{last:'',days:0},rate:0.95,furi:true,look:{...DEFAULT_LOOK},owned:ITEMS.filter(i=>!i.p).map(i=>i.id),seenStage:0},load());
+const myStage=()=>stageOf(level());
 function load(){try{return JSON.parse(localStorage.getItem(KEY))||{}}catch{return {}}}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch{}}
 const today=()=>new Date().toLocaleDateString('sv-SE');
@@ -130,7 +147,7 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',
 const $=s=>document.querySelector(s);
 
 // ---------- characters (placeholder SVG until the ChatGPT art is in chara/) ----------
-const NAMES={neko:'ニャンタ先生',mirai:'ミライ'};
+const NAMES={neko:'ニャンタ先生',get mirai(){return S.name||'あなた'}};
 function face(who,f){
  const mouth={normal:'M42 70 Q50 76 58 70',happy:'M38 66 Q50 84 62 66 Z',surprise:'M50 66 m-6 0 a6 7 0 1 0 12 0 a6 7 0 1 0 -12 0',think:'M42 72 L58 70',sad:'M40 76 Q50 66 60 76'}[f]||'';
  const eyes=f==='happy'?'<path d="M30 50 Q36 43 42 50 M58 50 Q64 43 70 50" stroke="#3b2a1f" stroke-width="4" fill="none" stroke-linecap="round"/>':f==='surprise'?'<circle cx="36" cy="50" r="7" fill="#3b2a1f"/><circle cx="64" cy="50" r="7" fill="#3b2a1f"/>':'<circle cx="36" cy="50" r="5" fill="#3b2a1f"/><circle cx="64" cy="50" r="5" fill="#3b2a1f"/><circle cx="38" cy="48" r="1.6" fill="#fff"/><circle cx="66" cy="48" r="1.6" fill="#fff"/>';
@@ -139,7 +156,7 @@ function face(who,f){
  return `<svg viewBox="0 0 100 100"><circle cx="50" cy="52" r="40" fill="#5b3a29"/><circle cx="50" cy="58" r="32" fill="#ffe2c9"/><path d="M18 52 Q20 18 50 16 Q80 18 82 52 Q70 30 50 34 Q30 30 18 52Z" fill="#6b4431"/><circle cx="78" cy="30" r="8" fill="#ff6fa5"/><circle cx="30" cy="66" r="6" fill="#ffb3c7" opacity=".7"/><circle cx="70" cy="66" r="6" fill="#ffb3c7" opacity=".7"/>${eyes}${m}</svg>`;
 }
 // ChatGPT art goes in chara/<who>_<face>.png; until a file exists the SVG above is shown.
-function chara(who,f='normal',pop=false){return `<span class="chara${pop?' pop':''}" data-who="${who}"><img src="chara/${who}_${f}.png" alt="${NAMES[who]}" style="width:100%;height:100%;object-fit:contain" onerror="this.outerHTML=face('${who}','${f}')"></span>`}
+function chara(who,f='normal',pop=false){if(who==='mirai')return `<span class="chara${pop?' pop':''}">${avatarSVG(S.look,myStage(),f,'bust')}</span>`;return `<span class="chara${pop?' pop':''}" data-who="${who}"><img src="chara/${who}_${f}.png" alt="${NAMES[who]}" style="width:100%;height:100%;object-fit:contain" onerror="this.outerHTML=face('${who}','${f}')"></span>`}
 function say(who,f,html,pop){return `<div class="stage${who==='mirai'?' right':''}">${chara(who,f,pop)}<div class="bubble"><span class="name">${NAMES[who]}</span>${html}</div></div>`}
 
 // ---------- speech ----------
@@ -180,6 +197,7 @@ function home(){
  app.innerHTML=`${header('たっけんクエスト')}<div class="stats"><span class="pill">🪙 ${S.coins}</span><span class="pill">🔥 ${S.streak.days}<small>日</small></span><span class="pill">⭐ ${Object.values(S.stars).reduce((a,b)=>a+b,0)}</span></div>
  <div class="hello">${say('neko',done?'happy':'normal',greet,true)}</div>
  <div class="lvl"><b>レベル ${lv}</b> <span class="muted">あと${100-S.xp%100}ポイントでレベルアップ</span><div class="bar"><i style="width:${S.xp%100}%"></i></div></div>
+ <button class="me" onclick="go(closet)"><span class="mefig">${avatarSVG(S.look,myStage(),done?'happy':'normal','full')}</span><span class="mecopy"><b>${esc(S.name)}</b><span class="stg">${STAGES[myStage()].name}</span>${myStage()<STAGES.length-1?`<small>レベル${STAGES[myStage()+1].from}で${STAGES[myStage()+1].name}に<ruby>成長<rt>せいちょう</rt></ruby>！</small>`:'<small>さいこうの<ruby>成長<rt>せいちょう</rt></ruby>だんかい！</small>'}<span class="pill" style="margin-top:8px">👗 きせかえ</span></span></button>
  <button class="big" onclick="go(lesson,'${nx.id}')">▶ 「${nx.titleHtml}」をはじめる</button>
  <div class="grid2"><button class="tile" onclick="go(map)"><span class="ic">🗺️</span>ステージ</button><button class="tile" onclick="go(zukan)"><span class="ic">📘</span><ruby>言葉<rt>ことば</rt></ruby>ずかん<br><small class="muted">${got} / ${Object.keys(C.words).length}</small></button></div>
  <div class="grid2"><button class="tile" onclick="go(review)"><span class="ic">🔁</span>ふくしゅう</button><button class="tile" onclick="go(settings)"><span class="ic">⚙️</span>せってい</button></div>
@@ -228,6 +246,7 @@ function qAnswer(v){
 function qNext(){Q.i++;if(Q.i<Q.list.length)return qShow();result()}
 
 function result(){
+ const before=myStage();
  const n=Q.list.length,ok=Q.ok,star=ok===n?3:ok>=n-1?2:ok>=n-2?1:0,coins=ok*10+(star===3?20:0);
  S.coins+=coins;S.xp+=ok*10;touchStreak();
  // Missed questions go to review; a correct answer in review removes them.
@@ -241,6 +260,7 @@ function result(){
  ${fresh.length?`<div class="muted" style="text-align:center">あたらしい<ruby>言葉<rt>ことば</rt></ruby>カードをゲット！</div><div class="newwords">${fresh.map((w,i)=>`<button class="w" data-w="${esc(w)}" style="animation-delay:${i*.12}s"><ruby>${esc(w)}<rt>${esc(C.words[w].yomi)}</rt></ruby></button>`).join('')}</div>`:''}
  ${star===0&&Q.id?`<button class="big" onclick="go(quiz,'${Q.id}')">もう1回クイズ</button><div style="height:12px"></div><button class="sub" onclick="go(lesson,'${Q.id}')">レッスンを見なおす</button>`:`<button class="big" onclick="go(home)">ホームへ</button><div style="height:12px"></div><button class="sub" onclick="go(map)">ステージを見る</button>`}`;
  if(star>0)confetti();
+ if(myStage()>before)setTimeout(()=>grown(myStage()),900);
 }
 
 function review(){
@@ -253,6 +273,36 @@ function zukan(){
  const all=Object.keys(C.words);
  app.innerHTML=`${header('ことばずかん','go(home)')}<p class="muted" style="text-align:center">レッスンをクリアするとカードがふえるよ（${Object.keys(S.words).length} / ${all.length}）</p><div class="cards">${all.map(w=>S.words[w]?`<button class="card w" data-w="${esc(w)}" style="background:#fff;border:0"><ruby>${esc(w)}<rt>${esc(C.words[w].yomi)}</rt></ruby></button>`:'<div class="card lock">？</div>').join('')}</div>`;
 }
+
+function grown(st){
+ S.seenStage=st;save();confetti();
+ app.innerHTML=`${header('せいちょうした！')}<div class="growstage">${avatarSVG(S.look,st,'happy','full')}</div>
+ ${say('neko','happy',`すごいニャ！${esc(S.name)}ちゃんは<b>${STAGES[st].name}</b>に<ruby>成長<rt>せいちょう</rt></ruby>したよ！<br>あたらしいアイテムが<ruby>買<rt>か</rt></ruby>えるようになったニャ！`,true)}
+ <button class="big" onclick="go(closet)">👗 きせかえを見る</button><div style="height:12px"></div><button class="sub" onclick="go(home)">ホームへ</button>`;
+}
+
+let closetTab='hair',tryOn=null;
+function closet(tab){
+ if(tab)closetTab=tab;
+ const st=myStage(),look=tryOn?{...S.look,[tryOn.cat]:tryOn.id}:S.look;
+ const items=ITEMS.filter(i=>i.cat===closetTab);
+ app.innerHTML=`${header('きせかえ','tryOn=null;go(home)')}
+ <div class="closet-top"><div class="closet-fig">${avatarSVG(look,st,'happy','full')}</div><div class="closet-side"><span class="pill">🪙 ${S.coins}</span><span class="stg">${STAGES[st].name}</span>${tryOn?`<div class="tryon">${tryOn.name}<br>🪙 ${tryOn.p}</div><button class="big" style="font-size:17px;padding:12px" onclick="buy('${tryOn.id}')" ${S.coins<tryOn.p?'disabled':''}>${S.coins<tryOn.p?'コインが足りない':'かう！'}</button><button class="sub" style="font-size:15px;padding:10px;margin-top:8px" onclick="tryOn=null;closet()">やめる</button>`:''}</div></div>
+ <div class="ctabs">${CATS.map(([c,n])=>`<button class="${c===closetTab?'on':''}" onclick="tryOn=null;closet('${c}')">${n}</button>`).join('')}</div>
+ <div class="shelf">${items.map(i=>{const own=S.owned.includes(i.id),lock=i.st>st,on=S.look[i.cat]===i.id;return `<button class="it${on?' on':''}${lock?' lock':''}" onclick="pick('${i.id}')"><span class="itname">${lock?'🔒 ':''}${i.name}</span><small>${on?'きている':own?'もっている':lock?`${STAGES[i.st].name}から`:`🪙 ${i.p}`}</small></button>`}).join('')}</div>
+ <p class="muted" style="text-align:center">コインはクイズで<ruby>正解<rt>せいかい</rt></ruby>するともらえるよ</p>`;
+}
+function pick(id){
+ const i=item(id),st=myStage();
+ if(i.st>st){tryOn=null;closet();toast(`${STAGES[i.st].name}になったら<ruby>買<rt>か</rt></ruby>えるよ！レベルを上げよう！`);return}
+ if(S.owned.includes(id)){S.look[i.cat]=id;tryOn=null;save();closet();return}
+ tryOn=i;closet();
+}
+function buy(id){
+ const i=item(id);if(S.coins<i.p)return;
+ S.coins-=i.p;S.owned.push(id);S.look[i.cat]=id;tryOn=null;save();confetti();closet();toast(`「${i.name}」をゲット！`);
+}
+function toast(html){const t=document.createElement('div');t.className='toast';t.innerHTML=html;document.body.appendChild(t);setTimeout(()=>t.remove(),2200)}
 
 function settings(){
  app.innerHTML=`${header('せってい','go(home)')}

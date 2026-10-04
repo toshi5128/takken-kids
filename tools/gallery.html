@@ -1,0 +1,15 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>きせかえ確認用</title>
+<!-- 開発用：成長段階×服装・表情をまとめて目で確認するページ（アプリからはリンクしない） -->
+<body style="margin:0;background:#eee;font-family:sans-serif">
+<div id="g" style="display:grid;grid-template-columns:repeat(3,200px);gap:8px;padding:8px"></div>
+<div id="f" style="display:flex;gap:8px;padding:8px;flex-wrap:wrap"></div>
+<script src="../avatar.js"></script>
+<script>
+const looks=[[0,{}],[1,{hair:'h_long',color:'c_milk',top:'t_sailor',bottom:'b_pleat',shoes:'s_loafer',acc:'a_ear',nail:'n_rainbow',bg:'g_sakura'}],[2,{hair:'h_wave',color:'c_pink',top:'t_cardi',bottom:'b_pink',shoes:'s_boots',acc:'a_heartglass',nail:'n_heart',bg:'g_city'}],
+ [0,{hair:'h_twin',acc:'a_ribbon',top:'t_tee',bottom:'b_shorts',bg:'g_sky'}],[1,{hair:'h_side',color:'c_black',top:'t_blazer',bottom:'b_jeans',bg:'g_star',acc:'a_star'}],[2,{hair:'h_bun',color:'c_gold',top:'t_hoodiep',bottom:'b_pleat',acc:'a_neck',nail:'n_gold'}]];
+document.getElementById('g').innerHTML=looks.map(([s,l])=>`<div style="width:200px;height:320px">${avatarSVG(l,s,'normal','full')}</div>`).join('');
+document.getElementById('f').innerHTML=[0,2].flatMap(s=>['normal','happy','surprise','think','sad'].map(f=>`<div style="width:110px;height:110px;background:#fff;border-radius:50%;overflow:hidden">${avatarSVG(looks[s][1],s,f,'bust')}</div>`)).join('');
+</script>
+</body>
