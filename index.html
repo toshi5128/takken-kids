@@ -46,6 +46,13 @@ body.nofuri rt{display:none}
 /* home */
 .hello{margin:6px 0 18px}
 .stats{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.meter{display:block;width:100%;text-align:left;background:#fff;border:0;border-radius:18px;padding:12px 14px;box-shadow:var(--shadow);margin:14px 0;font:inherit;color:inherit;cursor:pointer}
+.meter .mh{display:flex;justify-content:space-between;align-items:baseline;gap:8px}.meter .mh span{font-size:13px;color:var(--muted)}
+.gauge{position:relative;height:22px;border-radius:999px;background:#f3e6d8;margin:22px 0 6px}.gauge>i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#7fd3ff,var(--green));transition:width .6s}
+.gauge em{position:absolute;top:-20px;transform:translateX(-50%);font-style:normal;font-size:11px;font-weight:800;color:var(--red);white-space:nowrap}.gauge em:after{content:'';position:absolute;left:50%;top:18px;width:3px;height:26px;background:var(--red);border-radius:2px}
+.mscore{font-size:15px}.mscore b{font-size:26px;color:var(--orange-d)}
+.fbar{display:grid;grid-template-columns:7.5em 1fr 3.6em;align-items:center;gap:8px;font-size:13px;margin-top:6px}.fbar .t{height:10px;border-radius:999px;background:#f3e6d8;overflow:hidden}.fbar .t i{display:block;height:100%;border-radius:999px}.fbar .n{text-align:right;font-variant-numeric:tabular-nums}
+.goalf{background:#fff;border-radius:18px;padding:12px 14px;box-shadow:var(--shadow);margin:12px 0}.goalf h3{margin:0 0 4px;font-size:17px}
 .lvl{background:#fff;border-radius:18px;padding:12px 14px;box-shadow:var(--shadow);margin:14px 0}
 .lvl .bar{height:14px;border-radius:999px;background:#f3e6d8;overflow:hidden;margin-top:8px}.lvl .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--yellow),var(--orange));border-radius:999px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
@@ -168,6 +175,8 @@ body.nofuri rt{display:none}
 let C=null; // course.json
 const KEY='tk_v1';
 const S=Object.assign({name:'',coins:0,xp:0,stars:{},best:{},words:{},streak:{last:'',days:0},rate:0.95,furi:true,look:{...DEFAULT_LOOK},owned:[...ITEMS,...ART].filter(i=>!i.p).map(i=>i.id),seenStage:0},load());
+// 2026-10-05 下田さん「つぎへを押したら自動で読んでほしい」→ 自動よみあげを最初からON（設定でOFFにできる）
+if(!S.autoReadV2){S.autoRead=true;S.autoReadV2=1;save()}
 const myStage=()=>stageOf(level());
 function load(){try{return JSON.parse(localStorage.getItem(KEY))||{}}catch{return {}}}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch{}}
@@ -197,7 +206,7 @@ let voice=null;
 function pickVoice(){const v=speechSynthesis.getVoices().filter(v=>/^ja/i.test(v.lang));voice=v.find(v=>/Google|Kyoko|Nanami|Haruka/i.test(v.name))||v[0]||null}
 if('speechSynthesis' in window){pickVoice();speechSynthesis.onvoiceschanged=pickVoice}
 // The voice reads the furigana shown on screen, so it can never say a reading different from what she sees.
-function plain(html){const d=document.createElement('div');d.innerHTML=html;d.querySelectorAll('ruby').forEach(r=>{const rt=r.querySelector('rt');r.replaceWith(rt?rt.textContent:r.textContent)});return d.textContent}
+function plain(html){const d=document.createElement('div');d.innerHTML=html;d.querySelectorAll('.name').forEach(n=>n.remove());d.querySelectorAll('ruby').forEach(r=>{const rt=r.querySelector('rt');r.replaceWith(rt?rt.textContent:r.textContent)});return d.textContent}
 function speak(html){if(!('speechSynthesis' in window))return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(plain(html));u.lang='ja-JP';u.rate=S.rate;if(voice)u.voice=voice;speechSynthesis.speak(u)}
 
 // ---------- streak / rewards ----------
@@ -213,6 +222,42 @@ function wordSheet(t){
  document.body.appendChild(sh);
 }
 document.addEventListener('click',e=>{const b=e.target.closest('.w');if(b){e.stopPropagation();wordSheet(b.dataset.w)}});
+
+// ---------- 合格メーター ----------
+// 本番50問の分野ごとの問題数に、その分野のクイズの正かい率をかけて「いま本番を受けたら何点くらいか」を出す。
+// まだやっていないレッスンは0点あつかい。○×のクイズなので本番より甘めに出る点は、合格ラインを高め(36点)にしてカバー。
+const EXAM_DATE='2027-10-17',PASS=36;
+const FIELDS=[
+ {name:'<ruby>宅建業法<rt>たっけんぎょうほう</rt></ruby>',q:20,from:1,to:10,color:'#ff8a3d'},
+ {name:'<ruby>法令<rt>ほうれい</rt></ruby>の<ruby>制限<rt>せいげん</rt></ruby>',q:8,from:11,to:14,color:'#2fa59a'},
+ {name:'<ruby>権利関係<rt>けんりかんけい</rt></ruby>',q:14,from:15,to:20,color:'#5b7fd6'},
+ {name:'<ruby>税<rt>ぜい</rt></ruby>・その<ruby>他<rt>た</rt></ruby>',q:8,from:21,to:23,color:'#d98c2b'}];
+const chNo=c=>parseInt(String(c.id).replace(/\D/g,''),10);
+const lessonAcc=id=>S.acc?.[id]??({3:1,2:.8,1:.6}[S.stars[id]]??0);
+function meter(){
+ const fs=FIELDS.map(f=>{const ls=C.chapters.filter(c=>chNo(c)>=f.from&&chNo(c)<=f.to).flatMap(c=>c.lessons);
+  const m=ls.length?ls.reduce((a,l)=>a+lessonAcc(l.id),0)/ls.length:0;
+  return {...f,ls,done:ls.filter(l=>S.stars[l.id]!==undefined).length,score:f.q*m}});
+ const total=fs.reduce((a,f)=>a+f.score,0),days=Math.max(0,Math.ceil((new Date(EXAM_DATE+'T00:00:00')-new Date())/864e5));
+ return {fs,total:Math.round(total),days};
+}
+function meterCard(){
+ const M=meter(),left=Math.max(0,PASS-M.total);
+ return `<button class="meter" onclick="go(goal)"><div class="mh"><b>🎯 <ruby>合格<rt>ごうかく</rt></ruby>メーター</b><span><ruby>本番<rt>ほんばん</rt></ruby>まであと${M.days}<ruby>日<rt>にち</rt></ruby></span></div>
+ <div class="gauge"><i style="width:${M.total/50*100}%"></i><em style="left:${PASS/50*100}%"><ruby>合格<rt>ごうかく</rt></ruby>ライン${PASS}<ruby>点<rt>てん</rt></ruby></em></div>
+ <div class="mscore">いまの<ruby>実力<rt>じつりょく</rt></ruby> <b>${M.total}</b> / 50<ruby>点<rt>てん</rt></ruby>　${left?`<ruby>合格<rt>ごうかく</rt></ruby>まであと<b style="font-size:18px">${left}</b><ruby>点<rt>てん</rt></ruby>！`:'🎉 <ruby>合格<rt>ごうかく</rt></ruby>ライン<ruby>突破<rt>とっぱ</rt></ruby>！'}</div>
+ ${M.fs.map(f=>`<div class="fbar"><span>${f.name}</span><span class="t"><i style="width:${f.score/f.q*100}%;background:${f.color}"></i></span><span class="n">${Math.round(f.score)}/${f.q}</span></div>`).join('')}</button>`;
+}
+function goal(){
+ const M=meter(),left=Math.max(0,PASS-M.total);
+ const msg=M.total===0?'クイズに<ruby>正解<rt>せいかい</rt></ruby>するほど、メーターがのびていくワン！':left?`あと${left}<ruby>点<rt>てん</rt></ruby>で<ruby>合格<rt>ごうかく</rt></ruby>ラインだワン！いっしょにがんばろう！`:'<ruby>合格<rt>ごうかく</rt></ruby>ラインをこえたワン！この<ruby>調子<rt>ちょうし</rt></ruby>でまちがいを<ruby>減<rt>へ</rt></ruby>らそう！';
+ app.innerHTML=`${header('<ruby>合格<rt>ごうかく</rt></ruby>メーター','go(home)')}${say('neko',left?'happy':'surprise',msg,true)}${meterCard().replace('onclick="go(goal)"','disabled style="cursor:default"')}
+ ${M.fs.map(f=>{const nx=f.ls.find(l=>S.stars[l.id]===undefined);return `<div class="goalf" style="border-left:6px solid ${f.color}"><h3>${f.name}　<small class="muted"><ruby>本番<rt>ほんばん</rt></ruby>${f.q}<ruby>問<rt>もん</rt></ruby></small></h3>
+  <div>いまの<ruby>点<rt>てん</rt></ruby> <b>${Math.round(f.score*10)/10}</b> / ${f.q}　・　レッスン ${f.done} / ${f.ls.length} クリア</div>
+  ${nx?`<div class="muted" style="margin-top:4px">つぎ：「${nx.titleHtml}」</div>`:'<div style="margin-top:4px">✅ ぜんぶクリア！まちがいは「ふくしゅう」で<ruby>直<rt>なお</rt></ruby>そう</div>'}</div>`}).join('')}
+ <p class="muted" style="font-size:13px">※ クイズの<ruby>正解<rt>せいかい</rt></ruby>のわりあいから、<ruby>本番<rt>ほんばん</rt></ruby>で<ruby>取<rt>と</rt></ruby>れそうな<ruby>点<rt>てん</rt></ruby>を<ruby>計算<rt>けいさん</rt></ruby>しています。<ruby>合格<rt>ごうかく</rt></ruby>ラインは<ruby>毎年<rt>まいとし</rt></ruby>35〜37<ruby>点<rt>てん</rt></ruby>くらいなので、36<ruby>点<rt>てん</rt></ruby>を<ruby>目標<rt>もくひょう</rt></ruby>にしています。</p>
+ <button class="big" onclick="go(home)">ホームへ</button>`;
+}
 
 // ---------- screens ----------
 const app=$('#app');
@@ -234,6 +279,7 @@ function home(){
  const greet=done===0?`${esc(S.name)}ちゃん、まずは<ruby>最初<rt>さいしょ</rt></ruby>のレッスンからだワン！`:S.streak.last===today()?`${esc(S.name)}ちゃん、<ruby>今日<rt>きょう</rt></ruby>もがんばってるね！えらいワン！`:`おかえり、${esc(S.name)}ちゃん！<ruby>今日<rt>きょう</rt></ruby>は「${nx.titleHtml}」をやろうワン！`;
  app.innerHTML=`${header('たっけんクエスト')}<div class="stats"><span class="pill">🪙 ${S.coins}</span><span class="pill">🔥 ${S.streak.days}<small>日</small></span><span class="pill">⭐ ${Object.values(S.stars).reduce((a,b)=>a+b,0)}</span></div>
  <div class="hello">${say('neko',done?'happy':'normal',greet,true)}</div>
+ ${meterCard()}
  <div class="lvl"><b>レベル ${lv}</b> <span class="muted">あと${100-S.xp%100}ポイントでレベルアップ</span><div class="bar"><i style="width:${S.xp%100}%"></i></div></div>
  <button class="me" onclick="go(closet)"><span class="mefig">${avatarHTML(S.look,myStage(),done?'happy':'normal','full')}</span><span class="mecopy"><b>${esc(S.name)}</b><span class="stg">${STAGES[myStage()].name}</span>${myStage()<STAGES.length-1?`<small>レベル${STAGES[myStage()+1].from}で${STAGES[myStage()+1].name}に<ruby>成長<rt>せいちょう</rt></ruby>！</small>`:'<small>さいこうの<ruby>成長<rt>せいちょう</rt></ruby>だんかい！</small>'}<span class="pill" style="margin-top:8px">👗 きせかえ</span></span></button>
  <div class="mission ${missionDone()?'done':''}"><b>🎯 <ruby>今日<rt>きょう</rt></ruby>のミッション</b><span>レッスン・ふくしゅう・ことばゲームのどれかを1<ruby>回<rt>かい</rt></ruby>クリア</span><em>${missionDone()?'✅ クリア！':`🪙 +${MISSION}`}</em></div>
@@ -284,12 +330,13 @@ function qShow(){
  <div class="qno">もんだい ${Q.i+1} / ${Q.list.length}　<span class="muted">${Q.title}</span></div><div class="qrow">${chara('mirai','think')}<div class="qcard">${q.qHtml}</div></div>
  <div class="combo">${Q.combo>=2?`🔥 ${Q.combo}れんぞく せいかい！`:''}</div>
  <div id="ans"><div class="ox"><button class="o" onclick="qAnswer(true)" aria-label="まる">○</button><button class="x" onclick="qAnswer(false)" aria-label="ばつ">×</button></div></div>`;
+ if(S.autoRead)speak(q.qHtml);
 }
 function qAnswer(v){
  const q=Q.list[Q.i],ok=v===q.a;
  if(ok){Q.ok++;Q.combo++}else{Q.combo=0;Q.miss.push(q)}
  $('#ans').innerHTML=`<div class="fb ${ok?'ok':'ng'}"><div class="stage">${chara('mirai',ok?'happy':'sad',true)}<div><h3>${ok?'せいかい！':'ざんねん…'}</h3><div>こたえは <b style="font-size:24px">${q.a?'○':'×'}</b></div></div></div><div>${q.whyHtml}</div></div><div style="height:14px"></div><button class="big ${ok?'green':'blue'}" onclick="qNext()">${Q.i+1<Q.list.length?'つぎのもんだい ›':'けっかを見る'}</button>`;
- if(!ok)speak(q.whyHtml);
+ if(!ok||S.autoRead)speak(q.whyHtml);
 }
 function qNext(){Q.i++;if(Q.i<Q.list.length)return qShow();result()}
 
@@ -300,6 +347,7 @@ function result(){
  // Missed questions go to review; a correct answer in review removes them.
  S.miss=S.miss||{};for(const q of Q.miss)S.miss[q.qHtml]={...q};for(const q of Q.list)if(!Q.miss.includes(q))delete S.miss[q.qHtml];
  let fresh=[];
+ if(Q.id){S.acc=S.acc||{};S.acc[Q.id]=Math.max(S.acc[Q.id]??0,ok/n)}
  if(Q.id){const l=lessons().find(l=>l.id===Q.id);if(star>0){S.stars[Q.id]=Math.max(S.stars[Q.id]??0,star);fresh=l.words.filter(w=>!S.words[w]);fresh.forEach(w=>S.words[w]=1)}}
  save();
  const msg=star===3?'ぜんもんせいかい！てんさいだワン！':star>0?'クリア！よくがんばったワン！':'おしい！もう1回やってみようワン！';
