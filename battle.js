@@ -33,7 +33,7 @@ function monsterFor(lessonId){const ch=(lessonId||'').split('-')[0];return {...(
 
 // Cute angry-ish monster, drawn in a 120x120 box. mood: normal | hit | attack | down
 // Chapters with Gemini art (art/mon/<chapter>.png); the rest keep the drawn blob until their art arrives.
-const MON_ART=new Set(Array.from({length:18},(_,i)=>'ch'+(i+1)));
+const MON_ART=new Set([...Array.from({length:23},(_,i)=>'ch'+(i+1)),'review']);
 function monsterSVG(m,mood='normal'){
  if(MON_ART.has(m.id))return `<img src="art/mon/${m.id}.png" class="mon-img ${mood}" alt="">`;
  const body={slime:`<path d="M20 98 Q12 60 40 36 Q60 18 80 36 Q108 60 100 98 Z" fill="${m.c}"/><path d="M28 92 Q60 102 92 92" stroke="${m.c2}" stroke-width="6" fill="none" opacity=".6"/>`,
