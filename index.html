@@ -197,6 +197,23 @@ body.quake .app{animation:shake .4s}
 .hintbtn:disabled{opacity:.45}.hintbtn small{display:block;font-size:11px;color:var(--muted);line-height:1.2}.hintbtn span{text-align:left;line-height:1.4}
 img.buddy.mini{width:44px;height:44px;object-fit:contain}
 .hintbox{display:flex;gap:8px;align-items:flex-start;background:#fff8e1;border:3px solid #ffd23f;border-radius:18px;padding:10px 12px;margin-bottom:10px;font-size:16px;line-height:2;animation:pop .3s}.hintbox b{display:block;font-size:14px;color:#8a5a00}
+.otile{display:flex;align-items:center;gap:12px;width:100%;margin-top:14px;text-align:left;padding:10px 16px}.otile img{width:48px;height:60px;object-fit:contain}.otile b{display:block;font-size:18px;line-height:2}.otile small{font-size:13px;color:var(--muted)}
+.room{position:relative;width:100%;max-width:calc(72dvh*848/1264);aspect-ratio:848/1264;margin:6px auto 8px;background:url(art/office/room.jpg) center/cover;border-radius:22px;overflow:hidden;box-shadow:var(--shadow);container-type:inline-size}
+.oslot{position:absolute;padding:0;background:none;border:0;line-height:0}.oslot img{width:100%;height:auto;display:block;filter:drop-shadow(0 3px 3px rgba(80,50,30,.18))}
+.oslot.empty{aspect-ratio:1;width:12cqw!important;border:3px dashed rgba(255,255,255,.95);border-radius:50%;background:rgba(255,111,165,.22)}
+.oslot .plus{display:flex;align-items:center;justify-content:center;height:100%;font-size:7cqw;font-weight:800;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.35)}
+.oslot.rug img{filter:none}
+.ome{position:absolute;left:50%;bottom:5%;height:50%;transform:translateX(-50%);pointer-events:none}.ome img{height:100%;width:auto}.ome .art{width:30cqw;height:100%}
+.otx{position:absolute;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;line-height:1.5;color:#3b2a1f;pointer-events:none}
+.otx.sign{left:27%;top:15%;width:63%;height:60%;font-size:2.4cqw}.otx.sign b{font-size:2.8cqw;border-bottom:2px solid #c9a35c}.otx.sign i{font-style:normal;font-weight:800;margin:4% 0}.otx.sign small{font-size:1.9cqw}
+.otx.board{left:12%;top:18%;width:76%;height:66%;font-size:2.2cqw;transform:skewY(-6deg)}.otx.board b{font-size:2.6cqw;color:#c0392b}.otx.board small{font-size:1.9cqw;line-height:1.6}
+.otx rt{font-size:50%}
+.ohint{background:#fff8e1;border:3px solid #ffd23f;border-radius:18px;padding:10px 14px;font-size:15px;line-height:2}
+.pill.buff{background:#fff3c4;color:#8a5a00}
+.orow{display:flex;align-items:center;gap:10px;width:100%;background:#fff;border:2px solid #f3e6d8;border-radius:16px;padding:8px 10px;margin-top:8px;text-align:left}.orow.here{border-color:var(--pink);background:#fff0f6}
+.orow img{width:56px;height:56px;object-fit:contain;flex-shrink:0}.orow span{flex:1;line-height:1.9}.orow b{display:block;font-size:16px}.orow small{display:block;font-size:12px;color:var(--muted);line-height:1.8}.orow small.sp{color:#d1477f;font-weight:800}
+.orow em{font-style:normal;font-weight:800;font-size:14px;white-space:nowrap;color:#8a5a00}
+.obon{display:block;font-size:14px;color:#8a5a00}
 @media(prefers-reduced-motion:reduce){*{animation:none!important}}
 </style>
 </head>
@@ -205,6 +222,7 @@ img.buddy.mini{width:44px;height:44px;object-fit:contain}
 <script src="avatar.js"></script>
 <script src="decor.js"></script>
 <script src="battle.js"></script>
+<script src="office.js"></script>
 <script>
 'use strict';
 // ---------- data & progress ----------
@@ -358,6 +376,7 @@ function home(){
  <div class="buddycard">${buddyImg()}<div><b>あいぼう：${esc(S.buddy.name)}</b><span>${['こいぬ','リボンのこいぬ','おうかんのこいぬ'][buddyStage()]}</span>${buddyStage()<2?`<div class="bar"><i style="width:${Math.min(100,(S.buddy.xp-BUDDY_STEPS[buddyStage()])/(BUDDY_STEPS[buddyStage()+1]-BUDDY_STEPS[buddyStage()])*100)}%"></i></div><small><ruby>正解<rt>せいかい</rt></ruby>するとなかよし<ruby>度<rt>ど</rt></ruby>アップ</small>`:'<small>さいこうに<ruby>仲<rt>なか</rt></ruby>よし！</small>'}</div></div>
  <div class="mission ${missionDone()?'done':''}"><b>🎯 <ruby>今日<rt>きょう</rt></ruby>のミッション</b><span>レッスン・ふくしゅう・ことばゲームのどれかを1<ruby>回<rt>かい</rt></ruby>クリア</span><em>${missionDone()?'✅ クリア！':`🪙 +${MISSION}`}</em></div>
  <button class="big" onclick="go(lesson,'${nx.id}')">▶ 「${nx.titleHtml}」をはじめる</button>
+ <button class="tile otile" onclick="go(office)"><img src="art/office/sign.png" alt=""><span><b>${officeName()}</b><small>${officeBuff()?`✨ クイズのコイン +${officeBuff()}%`:'<ruby>家具<rt>かぐ</rt></ruby>をおいて<ruby>自分<rt>じぶん</rt></ruby>のお<ruby>店<rt>みせ</rt></ruby>をつくろう'}</small></span></button>
  <div class="grid2"><button class="tile" onclick="go(map)"><span class="ic">🗺️</span>ステージ</button><button class="tile" onclick="go(zukan)"><span class="ic">📘</span><ruby>用語<rt>ようご</rt></ruby>じてん<br><small class="muted">${jitenPct()}% コンプリート</small></button></div>
  <div class="grid2"><button class="tile" onclick="go(review)"><span class="ic">🔁</span>ふくしゅう</button><button class="tile" onclick="go(wordgame)"><span class="ic">🎮</span>ことばゲーム</button><button class="tile" onclick="go(settings)"><span class="ic">⚙️</span>せってい</button></div>
  <p class="count">クリアしたレッスン ${done} / ${ls.length}</p>`;
@@ -452,7 +471,7 @@ function qNext(){Q.i++;if(Q.i<Q.list.length)return qShow();result()}
 function result(){
  const before=myStage();
  const n=Q.list.length,ok=Q.ok,star=ok===n?3:ok>=n-1?2:ok>=n-2?1:0,coins=ok*10+(star===3?20:0);
- S.coins+=coins;S.xp+=ok*10;touchStreak();
+ const obonus=officeBonus(coins);S.coins+=coins+obonus;S.xp+=ok*10;touchStreak();
  // Missed questions go to review; a correct answer in review removes them.
  S.miss=S.miss||{};for(const q of Q.miss)S.miss[q.qHtml]={...q};for(const q of Q.list)if(!Q.miss.includes(q))delete S.miss[q.qHtml];
  let fresh=[];
@@ -463,7 +482,7 @@ function result(){
  const battle=battleEnd();
  const msg=star===3?'ぜんもんせいかい！てんさいだワン！':star>0?'クリア！よくがんばったワン！':'おしい！もう1回やってみようワン！';
  app.innerHTML=`${header('けっか')}${battle}${say('neko',star?'happy':'think',msg,true)}<div class="stars">${[0,1,2].map(i=>`<span class="${i<star?'':'off'}">⭐</span>`).join('')}</div>
- <div class="earn">${ok} / ${n} もんせいかい　🪙 +${coins}</div>
+ <div class="earn">${ok} / ${n} もんせいかい　🪙 +${coins}${obonus?`<small class="obon">🏢 オフィスボーナス +${obonus}</small>`:''}</div>
  ${fresh.length?`<div class="muted" style="text-align:center">あたらしい<ruby>言葉<rt>ことば</rt></ruby>カードをゲット！</div><div class="newwords">${fresh.map((w,i)=>`<button class="w" data-w="${esc(w)}" style="animation-delay:${i*.12}s"><ruby>${esc(w)}<rt>${esc(C.words[w].yomi)}</rt></ruby></button>`).join('')}</div>`:''}
  ${star===0&&Q.id?`<button class="big" onclick="go(quiz,'${Q.id}')">もう1回クイズ</button><div style="height:12px"></div><button class="sub" onclick="go(lesson,'${Q.id}')">レッスンを見なおす</button>`:`<button class="big" onclick="go(home)">ホームへ</button><div style="height:12px"></div><button class="sub" onclick="go(map)">ステージを見る</button>`}`;
  if(star>0){confetti();if(completeMission())setTimeout(()=>toast(`🎯 ミッションクリア！ 🪙 +${MISSION}`),1200)}
