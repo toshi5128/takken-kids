@@ -162,6 +162,7 @@ body.nofuri rt{display:none}
 .gword{text-align:center;font-size:40px;font-weight:800;line-height:2.4;background:#fff;border-radius:24px;box-shadow:var(--shadow);margin:10px 0}
 .gopts{display:flex;flex-direction:column;gap:12px}.gopts .sub{text-align:left;font-size:16px;line-height:2;font-weight:500}
 .thumb.hairthumb{width:100%;height:130px;margin:0 auto 6px}
+.pcode{font-size:26px;font-weight:800;letter-spacing:2px;text-align:center;background:#fff7ec;border-radius:12px;padding:8px;margin:8px 0;user-select:all}
 @media(prefers-reduced-motion:reduce){*{animation:none!important}}
 </style>
 </head>
@@ -178,6 +179,30 @@ const S=Object.assign({name:'',coins:0,xp:0,stars:{},best:{},words:{},streak:{la
 // 2026-10-05 下田さん「つぎへを押したら自動で読んでほしい」→ 自動よみあげを最初からON（設定でOFFにできる）
 if(!S.autoReadV2){S.autoRead=true;S.autoReadV2=1;save()}
 const myStage=()=>stageOf(level());
+
+// ---------- parent view: send a study summary to the cloud (read with the parent code) ----------
+const SUPA='https://aevqdsozxiklyjfavvhf.supabase.co/rest/v1/rpc/',SKEY='sb_publishable_3J-KuCCmuO_d7WLzQrsrTg_U3QiaF_I';
+function rnd(n,abc){const a=new Uint32Array(n);crypto.getRandomValues(a);return [...a].map(v=>abc[v%abc.length]).join('')}
+if(!S.key)S.key=rnd(32,'abcdefghijkmnopqrstuvwxyz23456789');
+if(!S.pcode)S.pcode=rnd(10,'ABCDEFGHJKLMNPQRSTUVWXYZ23456789');  // no 0/O, 1/I: easy to type
+S.log=S.log||[];S.time=S.time||{};save();
+const pcodeShow=()=>S.pcode.replace(/(.{4})(.{4})(.{2})/,'$1-$2-$3');
+function logStudy(e){S.log.push({t:Date.now(),...e});if(S.log.length>300)S.log=S.log.slice(-300);save();syncSoon()}
+// study time: count only while the app is on screen
+setInterval(()=>{if(document.visibilityState==='visible'&&C){const d=today();S.time[d]=(S.time[d]||0)+20;save()}},20000);
+let syncTimer=null;
+function syncSoon(){clearTimeout(syncTimer);syncTimer=setTimeout(sync,1500)}
+async function sync(){
+ if(!C)return;
+ const ls=lessons(),days=Object.keys(S.time).sort().slice(-60);
+ const data={v:1,name:S.name,level:level(),stage:STAGES[myStage()].name,xp:S.xp,coins:S.coins,stars:S.stars,
+  words:Object.keys(S.words).length,wordsTotal:Object.keys(C.words).length,streak:S.streak,mission:S.mission||'',
+  lessonsDone:ls.filter(l=>S.stars[l.id]!==undefined).length,lessonsTotal:ls.length,next:nextLesson().id,
+  missNow:Object.values(S.miss||{}).map(q=>q.q).slice(0,30),log:S.log.slice(-200),time:Object.fromEntries(days.map(d=>[d,S.time[d]])),sentAt:new Date().toISOString()};
+ try{await fetch(SUPA+'takken_save',{method:'POST',headers:{apikey:SKEY,'Content-Type':'application/json'},body:JSON.stringify({p_key:S.key,p_code:S.pcode,p_data:data}),keepalive:true})}catch{}
+}
+setInterval(()=>{if(document.visibilityState==='visible')sync()},120000);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')sync()});
 function load(){try{return JSON.parse(localStorage.getItem(KEY))||{}}catch{return {}}}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch{}}
 const today=()=>new Date().toLocaleDateString('sv-SE');
@@ -350,6 +375,7 @@ function result(){
  if(Q.id){S.acc=S.acc||{};S.acc[Q.id]=Math.max(S.acc[Q.id]??0,ok/n)}
  if(Q.id){const l=lessons().find(l=>l.id===Q.id);if(star>0){S.stars[Q.id]=Math.max(S.stars[Q.id]??0,star);fresh=l.words.filter(w=>!S.words[w]);fresh.forEach(w=>S.words[w]=1)}}
  save();
+ logStudy({k:Q.id?'lesson':'review',id:Q.id||'',ok,n,miss:Q.miss.map(q=>q.q)});
  const msg=star===3?'ぜんもんせいかい！てんさいだワン！':star>0?'クリア！よくがんばったワン！':'おしい！もう1回やってみようワン！';
  app.innerHTML=`${header('けっか')}${say('neko',star?'happy':'think',msg,true)}<div class="stars">${[0,1,2].map(i=>`<span class="${i<star?'':'off'}">⭐</span>`).join('')}</div>
  <div class="earn">${ok} / ${n} もんせいかい　🪙 +${coins}</div>
@@ -388,7 +414,7 @@ function gAnswer(o){
 }
 function gNext(){
  G.i++;if(G.i<G.list.length)return gShow();
- const coins=G.ok*5;S.coins+=coins;S.xp+=G.ok*5;touchStreak();save();const m=G.ok>=3&&completeMission();
+ const coins=G.ok*5;S.coins+=coins;S.xp+=G.ok*5;touchStreak();save();logStudy({k:'game',ok:G.ok,n:G.list.length});const m=G.ok>=3&&completeMission();
  app.innerHTML=`${header('けっか')}${say('neko',G.ok>=4?'happy':'normal',G.ok===G.list.length?'ぜんぶわかったね！言葉はかせだワン！':'よくがんばったワン！また<ruby>遊<rt>あそ</rt></ruby>ぼう！',true)}
  <div class="earn">${G.ok} / ${G.list.length} もんせいかい　🪙 +${coins}</div><button class="big" onclick="go(wordgame)">もう1<ruby>回<rt>かい</rt></ruby></button><div style="height:12px"></div><button class="sub" onclick="go(home)">ホームへ</button>`;
  confetti();if(m)setTimeout(()=>toast(`🎯 ミッションクリア！ 🪙 +${MISSION}`),900);
@@ -476,13 +502,13 @@ function settings(){
  <div class="set"><label>レッスンを<ruby>自動<rt>じどう</rt></ruby>でよみあげ<input type="checkbox" id="ar" ${S.autoRead?'checked':''}></label></div>
  <div class="set"><label>よみあげの<ruby>速<rt>はや</rt></ruby>さ<input type="range" id="rt" min="0.6" max="1.3" step="0.05" value="${S.rate}"></label><button class="sub" style="margin-top:10px" onclick="speak('たっけんクエストへようこそ。いっしょにがんばろう。')">🔊 ためしによむ</button></div>
  <button class="big" onclick="setSave()">ほぞんする</button>
- <p class="muted" style="margin-top:24px">きろくはこのスマホの中だけにほぞんされます。</p>`;
+ <div class="set" style="margin-top:22px"><b>👨‍👩‍👧 おうちの<ruby>人<rt>ひと</rt></ruby>コード</b><div class="pcode">${pcodeShow()}</div><p class="muted">おうちの<ruby>人<rt>ひと</rt></ruby>がこのコードを<ruby>入<rt>い</rt></ruby>れると、<ruby>勉強<rt>べんきょう</rt></ruby>のがんばりを<ruby>見<rt>み</rt></ruby>られるよ。</p></div>`;
 }
 function setSave(){S.name=$('#nm').value.trim()||S.name;S.furi=$('#fu').checked;S.autoRead=$('#ar').checked;S.rate=+$('#rt').value;save();applyFuri();go(home)}
 function applyFuri(){document.body.classList.toggle('nofuri',!S.furi)}
 
 // ---------- start ----------
-fetch('data/course.json',{cache:'no-cache'}).then(r=>r.json()).then(d=>{C=d;applyFuri();home()}).catch(()=>{app.innerHTML='<p style="margin:auto;text-align:center">よみこみに<ruby>失敗<rt>しっぱい</rt></ruby>しました。<br>もう<ruby>一度<rt>いちど</rt></ruby>ひらいてね。</p>'});
+fetch('data/course.json',{cache:'no-cache'}).then(r=>r.json()).then(d=>{C=d;applyFuri();home();syncSoon()}).catch(()=>{app.innerHTML='<p style="margin:auto;text-align:center">よみこみに<ruby>失敗<rt>しっぱい</rt></ruby>しました。<br>もう<ruby>一度<rt>いちど</rt></ruby>ひらいてね。</p>'});
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
 </body>
