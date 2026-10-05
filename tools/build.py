@@ -16,7 +16,12 @@ READING_FIX = {'年れい': None, '何千万円': 'なんぜんまんえん', '�
                '何': 'なに', '1年': None, '1回': None,
                '母さん': 'かあさん', '父さん': 'とうさん', '言う': 'いう', '日本': 'にほん',
                # domain words the dictionary reads wrongly (業 alone is ごう in UniDic)
-               '業': 'ぎょう', '1人': 'ひとり', '間に入': 'あいだにはい', '90日': 'きゅうじゅうにち', '30日': 'さんじゅうにち'}
+               '業': 'ぎょう', '1人': 'ひとり', '間に入': 'あいだにはい', '90日': 'きゅうじゅうにち', '30日': 'さんじゅうにち',
+               # 業 を単独で直すと「業務」の務が「つとむ」になるので、業で始まる熟語は丸ごと
+               '業務': 'ぎょうむ', '業者': 'ぎょうしゃ', '業法': 'ぎょうほう', '生徒証': 'せいとしょう',
+               # 数字＋日は「8(か)」のように読まれるので、日付の読みを丸ごと付ける
+               '8日間': 'ようかかん', '8日': 'ようか', '7日': 'なのか', '10日': 'とおか', '5日': 'いつか', '9日': 'ここのか',
+               '50日': 'ごじゅうにち', '31日': 'さんじゅういちにち'}
 tagger = fugashi.Tagger()
 
 
@@ -70,7 +75,8 @@ def render(text, terms, link=True):
     """Terms first (longest wins), the rest through furigana. link=False: glossary reading only (titles)."""
     if not terms:
         return furigana(text)
-    pat =re.compile('|'.join(re.escape(t) for t in sorted(terms, key=len, reverse=True)))
+    # 長い熟語の途中にある言葉は拾わない（「業務」の業・「免許証」の免許を拾うと、残りの務・証の読みが狂うため）
+    pat = re.compile('(?<![㐀-鿿々])(?:' + '|'.join(re.escape(t) for t in sorted(terms, key=len, reverse=True)) + ')(?![㐀-鿿々])')
     out, pos = [], 0
     for m in pat.finditer(text):
         out.append(furigana(text[pos:m.start()]))

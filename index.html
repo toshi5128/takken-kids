@@ -148,7 +148,7 @@ body.nofuri rt{display:none}
 .thumb{display:block;width:100%;height:120px;border-radius:12px;overflow:hidden;background:#fff7ec;margin-bottom:6px}.thumb svg{width:100%;height:100%}.thumb.emo{font-size:46px;line-height:120px;text-align:center}
 .zu{background:#fff;border-radius:22px;padding:14px;box-shadow:var(--shadow);margin:8px 0}.zu .lbl{display:inline-block;background:var(--blue);color:#fff;border-radius:999px;padding:0 12px;font-size:14px;line-height:1.9}
 .zu h3{margin:8px 0;font-size:18px;line-height:2}.zu table{width:100%;border-collapse:separate;border-spacing:4px;font-size:15px;line-height:1.9}
-.zu th{background:#fff1b8;border-radius:10px;padding:4px 6px;font-size:13px}.zu td{background:#fff7ec;border-radius:10px;padding:6px;text-align:center}.zu tr>td:first-child{white-space:nowrap;font-weight:800;text-align:left}.zu .lbl rt{color:#fff}
+.zu th{background:#fff1b8;border-radius:10px;padding:4px 6px;font-size:13px}.zu td{background:#fff7ec;border-radius:10px;padding:6px;text-align:center}.zu tr>td:first-child{font-weight:800;text-align:left}.zu .tw{overflow-x:auto}.zu .lbl rt{color:#fff}
 .mk{font-size:28px;font-weight:800;line-height:1}.mk.ok{color:var(--green)}.mk.ng{color:var(--red)}
 .mission{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;background:linear-gradient(135deg,#fff3c4,#ffe0ec);border:3px solid var(--yellow);border-radius:18px;padding:10px 14px;margin-bottom:14px;line-height:1.9}
 .mission b{font-size:16px}.mission span{font-size:14px;flex:1 1 60%}.mission em{font-style:normal;font-weight:800;color:var(--orange-d)}.mission.done{border-color:var(--green);background:#e6f8ee}.mission.done em{color:var(--green)}
@@ -252,6 +252,8 @@ function map(){
   h+='</div><div style="height:30px"></div>';
  }
  app.innerHTML=h;
+ // 章が増えて地図が長くなったので、いまやるステージまで自動でスクロール
+ const cur=document.querySelector('.node.open');if(cur)cur.scrollIntoView({block:'center'});
 }
 
 function lesson(id,idx=0){
@@ -267,7 +269,7 @@ function lesson(id,idx=0){
 // 図で見るまとめ: ○ and × become big coloured marks so the pattern is visible at a glance.
 function zuCard(p){
  const cell=h=>h==='○'?'<span class="mk ok">○</span>':h==='×'?'<span class="mk ng">×</span>':h;
- return `<div class="zu"><b class="lbl">📊 <ruby>図<rt>ず</rt></ruby>で<ruby>見<rt>み</rt></ruby>てみよう</b><h3>${p.titleHtml}</h3><table>${p.tableHtml.map((r,i)=>`<tr>${r.map(c=>i===0?`<th>${c}</th>`:`<td>${cell(c)}</td>`).join('')}</tr>`).join('')}</table></div>${chara('neko','happy',true)}`;
+ return `<div class="zu"><b class="lbl">📊 <ruby>図<rt>ず</rt></ruby>で<ruby>見<rt>み</rt></ruby>てみよう</b><h3>${p.titleHtml}</h3><div class="tw"><table>${p.tableHtml.map((r,i)=>`<tr>${r.map(c=>i===0?`<th>${c}</th>`:`<td>${cell(c)}</td>`).join('')}</tr>`).join('')}</table></div></div>${chara('neko','happy',true)}`;
 }
 
 let Q=null;
