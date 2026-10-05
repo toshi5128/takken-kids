@@ -163,6 +163,30 @@ body.nofuri rt{display:none}
 .gopts{display:flex;flex-direction:column;gap:12px}.gopts .sub{text-align:left;font-size:16px;line-height:2;font-weight:500}
 .thumb.hairthumb{width:100%;height:130px;margin:0 auto 6px}
 .pcode{font-size:26px;font-weight:800;letter-spacing:2px;text-align:center;background:#fff7ec;border-radius:12px;padding:8px;margin:8px 0;user-select:all}
+.enemy{display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#2b2350,#4a3a7a);border-radius:20px;padding:8px 14px;margin:4px 0 8px;color:#fff}
+.enemy rt{color:#e6defc}.mon{width:84px;height:84px;flex-shrink:0;animation:bob 2s ease-in-out infinite}.mon svg{width:100%;height:100%}
+.mon.hit{animation:shake .4s}.mon.attack{animation:lunge .5s}.mon.down{animation:none;transform:rotate(90deg) translateX(10px);opacity:.75;transition:.4s}
+.einfo{flex:1;min-width:0}.einfo b{font-size:16px;line-height:2}.hp{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:800}
+.hpbar{flex:1;height:14px;background:#1a1533;border-radius:999px;overflow:hidden;border:2px solid #fff}.hpbar i{display:block;height:100%;background:linear-gradient(90deg,#ff5a5f,#ffb547);transition:width .5s}
+@keyframes lunge{40%{transform:translateY(14px) scale(1.15)}}
+.bfx{position:fixed;inset:0;pointer-events:none;z-index:35;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px}
+.bfx .skill{font-size:28px;font-weight:800;color:#fff;text-align:center;line-height:2;padding:6px 18px;border-radius:18px;max-width:90%;animation:pop .35s;text-shadow:0 2px 0 rgba(0,0,0,.25)}
+.bfx .skill rt{color:#fff}.bfx.win .skill{background:linear-gradient(135deg,#ff6fa5,#ffb547)}.bfx.lose .skill{background:#7a3b8a}
+.bfx .beam{position:fixed;left:-10%;top:24%;width:120%;height:26px;border-radius:999px;background:linear-gradient(90deg,transparent,#fff7a8,#ff8fd1,#8fe3ff,transparent);animation:beam .6s ease-out forwards;box-shadow:0 0 30px #ffd1f0}
+@keyframes beam{0%{transform:scaleX(0);transform-origin:left;opacity:1}100%{transform:scaleX(1);opacity:0}}
+.bfx .ko{font-size:44px;font-weight:800;color:#ffd23f;text-shadow:0 3px 0 #c97b00,0 0 20px #fff;animation:pop .5s .3s both}
+.bfx.lose{background:rgba(255,40,60,.18);animation:fade .2s}
+body.quake .app{animation:shake .4s}
+.bres{display:flex;align-items:center;gap:12px;border-radius:20px;padding:10px 14px;margin:6px 0 10px;line-height:1.9}.bres.win{background:#fff3c4;border:3px solid var(--yellow)}.bres.lose{background:#f1ecff;border:3px solid #c3b8f0}
+.bres .mon.small{width:64px;height:64px;animation:none}.bres b{display:block;font-size:17px}.bres span{display:block;font-size:14px}.bres .drop{color:#d1477f;font-weight:800}
+.cho{background:linear-gradient(135deg,#ffe0ec,#fff3c4);border:3px solid var(--pink);border-radius:18px;padding:12px 14px;font-size:19px;line-height:2.1;margin:8px 0 12px;font-weight:800}
+.cho b{display:inline-block;background:var(--pink);color:#fff;border-radius:999px;padding:0 12px;font-size:13px;line-height:1.9;margin-bottom:4px}.cho b rt{color:#fff}
+.jiten-top{background:#fff;border-radius:20px;padding:14px 16px;box-shadow:var(--shadow);margin:6px 0 10px}.jiten-top>div:first-child{display:flex;justify-content:space-between;align-items:baseline}
+.jiten-top strong{font-size:40px;color:var(--pink)}.jiten-top strong small{font-size:18px}.jiten-top .bar{height:14px;border-radius:999px;background:#f3e6d8;overflow:hidden;margin:6px 0}.jiten-top .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--pink),var(--yellow))}
+.jiten-top span{font-size:13px;color:var(--muted)}
+.shelf-ch{background:#fff;border-radius:18px;box-shadow:var(--shadow);margin-bottom:10px;padding:4px 12px}.shelf-ch summary{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 0;font-weight:800;font-size:16px;line-height:2;cursor:pointer;list-style:none}
+.shelf-ch summary::-webkit-details-marker{display:none}.shelf-ch em{font-style:normal;font-size:14px;color:var(--muted);white-space:nowrap}.shelf-ch em.full{color:#e0a800}
+.shelf-ch .cards{padding-bottom:12px}.card.super{background:linear-gradient(135deg,#fff,#ffe9f2);position:relative}.card.super:after{content:'⭐';position:absolute;top:2px;right:6px;font-size:14px}
 @media(prefers-reduced-motion:reduce){*{animation:none!important}}
 </style>
 </head>
@@ -170,6 +194,7 @@ body.nofuri rt{display:none}
 <div class="app" id="app"></div>
 <script src="avatar.js"></script>
 <script src="decor.js"></script>
+<script src="battle.js"></script>
 <script>
 'use strict';
 // ---------- data & progress ----------
@@ -239,11 +264,15 @@ function touchStreak(){const t=today(),y=new Date(Date.now()-864e5).toLocaleDate
 function confetti(){const c=document.createElement('div');c.className='confetti';const col=['#ff8a3d','#ffd23f','#ff6fa5','#4aa8ff','#2fbf71'];for(let i=0;i<60;i++){const e=document.createElement('i');e.style.left=Math.random()*100+'%';e.style.background=col[i%5];e.style.animationDelay=Math.random()*.6+'s';e.style.animationDuration=1.4+Math.random()*1.2+'s';c.appendChild(e)}document.body.appendChild(c);setTimeout(()=>c.remove(),3200)}
 
 // ---------- word sheet ----------
+let CHO={};fetch('data/cho.json',{cache:'no-cache'}).then(r=>r.json()).then(d=>CHO=d).catch(()=>{});
+const cho=t=>CHO[t]?CHO[t].replace(/\{name\}/g,esc(S.name||'きみ')):'';
 function wordSheet(t){
  const w=C.words[t];if(!w)return;speechSynthesis?.cancel?.();
+ // meeting a word counts as collecting it
+ if(!S.words[t]){S.words[t]=1;save();setTimeout(()=>toast(`📖 じてんに<ruby>登録<rt>とうろく</rt></ruby>！（${jitenPct()}%）`),300)}
  const sh=document.createElement('div');sh.className='shade';
- sh.innerHTML=`<div class="sheet" role="dialog" aria-label="${esc(t)}"><h2><ruby>${esc(t)}<rt>${esc(w.yomi)}</rt></ruby></h2><div class="mean">${w.meanHtml}</div><div class="tatoe">💡 たとえば…<br>${w.tatoeHtml}</div><div class="row"><button class="sub" data-say>🔊 よむ</button><button class="big" data-close style="font-size:18px;padding:14px">わかった！</button></div></div>`;
- sh.addEventListener('click',e=>{if(e.target===sh||e.target.closest('[data-close]'))sh.remove();if(e.target.closest('[data-say]'))speak(`${w.yomi}。${w.meanHtml}。たとえば、${w.tatoeHtml}`)});
+ sh.innerHTML=`<div class="sheet" role="dialog" aria-label="${esc(t)}"><h2><ruby>${esc(t)}<rt>${esc(w.yomi)}</rt></ruby></h2>${cho(t)?`<div class="cho"><b>ひとことで<ruby>言<rt>い</rt></ruby>うと</b>${cho(t)}</div>`:''}<div class="mean">${w.meanHtml}</div><div class="tatoe">💡 たとえば…<br>${w.tatoeHtml}</div><div class="row"><button class="sub" data-say>🔊 よむ</button><button class="big" data-close style="font-size:18px;padding:14px">わかった！</button></div></div>`;
+ sh.addEventListener('click',e=>{if(e.target===sh||e.target.closest('[data-close]'))sh.remove();if(e.target.closest('[data-say]'))speak(`${w.yomi}。${cho(t)?'ひとことでいうと、'+cho(t)+'。':''}${w.meanHtml}。たとえば、${w.tatoeHtml}`)});
  document.body.appendChild(sh);
 }
 document.addEventListener('click',e=>{const b=e.target.closest('.w');if(b){e.stopPropagation();wordSheet(b.dataset.w)}});
@@ -309,7 +338,7 @@ function home(){
  <button class="me" onclick="go(closet)"><span class="mefig">${avatarHTML(S.look,myStage(),done?'happy':'normal','full')}</span><span class="mecopy"><b>${esc(S.name)}</b><span class="stg">${STAGES[myStage()].name}</span>${myStage()<STAGES.length-1?`<small>レベル${STAGES[myStage()+1].from}で${STAGES[myStage()+1].name}に<ruby>成長<rt>せいちょう</rt></ruby>！</small>`:'<small>さいこうの<ruby>成長<rt>せいちょう</rt></ruby>だんかい！</small>'}<span class="pill" style="margin-top:8px">👗 きせかえ</span></span></button>
  <div class="mission ${missionDone()?'done':''}"><b>🎯 <ruby>今日<rt>きょう</rt></ruby>のミッション</b><span>レッスン・ふくしゅう・ことばゲームのどれかを1<ruby>回<rt>かい</rt></ruby>クリア</span><em>${missionDone()?'✅ クリア！':`🪙 +${MISSION}`}</em></div>
  <button class="big" onclick="go(lesson,'${nx.id}')">▶ 「${nx.titleHtml}」をはじめる</button>
- <div class="grid2"><button class="tile" onclick="go(map)"><span class="ic">🗺️</span>ステージ</button><button class="tile" onclick="go(zukan)"><span class="ic">📘</span><ruby>言葉<rt>ことば</rt></ruby>ずかん<br><small class="muted">${got} / ${Object.keys(C.words).length}</small></button></div>
+ <div class="grid2"><button class="tile" onclick="go(map)"><span class="ic">🗺️</span>ステージ</button><button class="tile" onclick="go(zukan)"><span class="ic">📘</span><ruby>用語<rt>ようご</rt></ruby>じてん<br><small class="muted">${jitenPct()}% コンプリート</small></button></div>
  <div class="grid2"><button class="tile" onclick="go(review)"><span class="ic">🔁</span>ふくしゅう</button><button class="tile" onclick="go(wordgame)"><span class="ic">🎮</span>ことばゲーム</button><button class="tile" onclick="go(settings)"><span class="ic">⚙️</span>せってい</button></div>
  <p class="count">クリアしたレッスン ${done} / ${ls.length}</p>`;
  if(bonus)setTimeout(()=>{confetti();toast(`ログインボーナス！ 🪙 +${BONUS}`)},400);
@@ -347,11 +376,13 @@ let Q=null;
 function quiz(id,items,title){
  const l=id&&lessons().find(l=>l.id===id);
  Q={id,list:items||l.quiz.map(q=>({...q,from:id})),i:0,ok:0,combo:0,miss:[],title:title||l.titleHtml};
+ Q.mon=monsterFor(id||'review');Q.need=Math.max(1,Q.list.length-1);Q.hits=0;
  qShow();
 }
 function qShow(){
  const q=Q.list[Q.i];
  app.innerHTML=`<div class="top"><button class="back" onclick="go(home)" aria-label="やめる">×</button><div class="prog"><i style="width:${Q.i/Q.list.length*100}%"></i></div><button class="back" onclick="speak(Q.list[Q.i].qHtml)" aria-label="よみあげ">🔊</button></div>
+ <div class="enemy" id="enemy">${enemyCard('normal')}</div>
  <div class="qno">もんだい ${Q.i+1} / ${Q.list.length}　<span class="muted">${Q.title}</span></div><div class="qrow">${chara('mirai','think')}<div class="qcard">${q.qHtml}</div></div>
  <div class="combo">${Q.combo>=2?`🔥 ${Q.combo}れんぞく せいかい！`:''}</div>
  <div id="ans"><div class="ox"><button class="o" onclick="qAnswer(true)" aria-label="まる">○</button><button class="x" onclick="qAnswer(false)" aria-label="ばつ">×</button></div></div>`;
@@ -359,10 +390,32 @@ function qShow(){
 }
 function qAnswer(v){
  const q=Q.list[Q.i],ok=v===q.a;
- if(ok){Q.ok++;Q.combo++}else{Q.combo=0;Q.miss.push(q)}
+ if(ok){Q.ok++;Q.combo++;Q.hits++}else{Q.combo=0;Q.miss.push(q)}
+ battleFx(ok);
  $('#ans').innerHTML=`<div class="fb ${ok?'ok':'ng'}"><div class="stage">${chara('mirai',ok?'happy':'sad',true)}<div><h3>${ok?'せいかい！':'ざんねん…'}</h3><div>こたえは <b style="font-size:24px">${q.a?'○':'×'}</b></div></div></div><div>${q.whyHtml}</div></div><div style="height:14px"></div><button class="big ${ok?'green':'blue'}" onclick="qNext()">${Q.i+1<Q.list.length?'つぎのもんだい ›':'けっかを見る'}</button>`;
  if(!ok||S.autoRead)speak(q.whyHtml);
 }
+// ---------- battle ----------
+function enemyCard(mood){
+ const m=Q.mon,left=Math.max(0,Q.need-Q.hits);
+ return `<div class="mon ${mood}">${monsterSVG(m,mood)}</div><div class="einfo"><b>${bruby(m.name)}</b><div class="hp"><span>HP</span><div class="hpbar"><i style="width:${left/Q.need*100}%"></i></div></div></div>`;
+}
+function battleFx(ok){
+ const m=Q.mon,down=Q.hits>=Q.need;
+ $('#enemy').innerHTML=enemyCard(ok?(down?'down':'hit'):'attack');
+ const fx=document.createElement('div');fx.className='bfx '+(ok?'win':'lose');
+ fx.innerHTML=ok?`<div class="beam"></div><div class="skill">${bruby(m.sk[(Q.hits-1)%m.sk.length])}！</div>${down?'<div class="ko">やっつけた！</div>':''}`
+  :`<div class="skill">${bruby(m.name)}のこうげき！</div>`;
+ document.body.appendChild(fx);if(!ok)document.body.classList.add('quake');
+ setTimeout(()=>{fx.remove();document.body.classList.remove('quake')},1500);
+}
+function battleEnd(){
+ // Defeat = bonus coins and sometimes a free item from the gacha pool. Losing never takes anything away.
+ const m=Q.mon,win=Q.hits>=Q.need;let bonus=0,drop=null;
+ if(win){bonus=30;const pool=gachaPool();if(pool.length&&Math.random()<.4){drop=pool[Math.floor(Math.random()*pool.length)];S.owned.push(drop.id)}S.coins+=bonus;S.defeated=S.defeated||{};S.defeated[m.id]=(S.defeated[m.id]||0)+1;save()}
+ return `<div class="bres ${win?'win':'lose'}"><div class="mon small">${monsterSVG(m,win?'down':'normal')}</div><div><b>${win?`${bruby(m.name)}をやっつけた！`:`${bruby(m.name)}に、にげられた…`}</b><span>${win?`ボーナス 🪙 +${bonus}`:'もう1<ruby>回<rt>かい</rt></ruby>ちょうせんして、やっつけよう！'}</span>${drop?`<span class="drop">🎁 ドロップ：${drop.name}</span>`:''}</div></div>`;
+}
+
 function qNext(){Q.i++;if(Q.i<Q.list.length)return qShow();result()}
 
 function result(){
@@ -376,8 +429,9 @@ function result(){
  if(Q.id){const l=lessons().find(l=>l.id===Q.id);if(star>0){S.stars[Q.id]=Math.max(S.stars[Q.id]??0,star);fresh=l.words.filter(w=>!S.words[w]);fresh.forEach(w=>S.words[w]=1)}}
  save();
  logStudy({k:Q.id?'lesson':'review',id:Q.id||'',ok,n,miss:Q.miss.map(q=>q.q)});
+ const battle=battleEnd();
  const msg=star===3?'ぜんもんせいかい！てんさいだワン！':star>0?'クリア！よくがんばったワン！':'おしい！もう1回やってみようワン！';
- app.innerHTML=`${header('けっか')}${say('neko',star?'happy':'think',msg,true)}<div class="stars">${[0,1,2].map(i=>`<span class="${i<star?'':'off'}">⭐</span>`).join('')}</div>
+ app.innerHTML=`${header('けっか')}${battle}${say('neko',star?'happy':'think',msg,true)}<div class="stars">${[0,1,2].map(i=>`<span class="${i<star?'':'off'}">⭐</span>`).join('')}</div>
  <div class="earn">${ok} / ${n} もんせいかい　🪙 +${coins}</div>
  ${fresh.length?`<div class="muted" style="text-align:center">あたらしい<ruby>言葉<rt>ことば</rt></ruby>カードをゲット！</div><div class="newwords">${fresh.map((w,i)=>`<button class="w" data-w="${esc(w)}" style="animation-delay:${i*.12}s"><ruby>${esc(w)}<rt>${esc(C.words[w].yomi)}</rt></ruby></button>`).join('')}</div>`:''}
  ${star===0&&Q.id?`<button class="big" onclick="go(quiz,'${Q.id}')">もう1回クイズ</button><div style="height:12px"></div><button class="sub" onclick="go(lesson,'${Q.id}')">レッスンを見なおす</button>`:`<button class="big" onclick="go(home)">ホームへ</button><div style="height:12px"></div><button class="sub" onclick="go(map)">ステージを見る</button>`}`;
@@ -420,9 +474,15 @@ function gNext(){
  confetti();if(m)setTimeout(()=>toast(`🎯 ミッションクリア！ 🪙 +${MISSION}`),900);
 }
 
-function zukan(){
- const all=Object.keys(C.words);
- app.innerHTML=`${header('ことばずかん','go(home)')}<p class="muted" style="text-align:center">レッスンをクリアするとカードがふえるよ（${Object.keys(S.words).length} / ${all.length}）</p><div class="cards">${all.map(w=>S.words[w]?`<button class="card w" data-w="${esc(w)}" style="background:#fff;border:0"><ruby>${esc(w)}<rt>${esc(C.words[w].yomi)}</rt></ruby></button>`:'<div class="card lock">？</div>').join('')}</div>`;
+const jitenPct=()=>Math.floor(Object.keys(S.words).length/Object.keys(C.words).length*100);
+function zukan(open){
+ const got=Object.keys(S.words).length,all=Object.keys(C.words).length,pct=jitenPct(),seen=new Set();
+ const shelves=C.chapters.map(c=>{const ws=[];for(const l of c.lessons)for(const w of l.words)if(!seen.has(w)&&C.words[w]){seen.add(w);ws.push(w)}return {c,ws}}).filter(x=>x.ws.length);
+ const card=w=>S.words[w]?`<button class="card w${CHO[w]?' super':''}" data-w="${esc(w)}"><ruby>${esc(w)}<rt>${esc(C.words[w].yomi)}</rt></ruby></button>`:'<div class="card lock">？</div>';
+ app.innerHTML=`${header('たっけんようごじてん','go(home)')}
+ <div class="jiten-top"><div><b>コンプリート<ruby>率<rt>りつ</rt></ruby></b><strong>${pct}<small>%</small></strong></div><div class="bar"><i style="width:${pct}%"></i></div><span>${got} / ${all}<ruby>語<rt>ご</rt></ruby>　⭐は「ひとことで<ruby>言<rt>い</rt></ruby>うと」つき</span></div>
+ <p class="muted" style="text-align:center">レッスンでクリアしたり、きいろの<ruby>言葉<rt>ことば</rt></ruby>をタップすると<ruby>登録<rt>とうろく</rt></ruby>されるよ</p>
+ ${shelves.map(({c,ws},i)=>{const g=ws.filter(w=>S.words[w]).length;return `<details class="shelf-ch" ${open===c.id||(open===undefined&&g&&g<ws.length)?'open':''}><summary><span>${c.titleHtml}</span><em class="${g===ws.length?'full':''}">${g===ws.length?'👑 ':''}${g} / ${ws.length}</em></summary><div class="cards">${ws.map(card).join('')}</div></details>`}).join('')}`;
 }
 
 function grown(st){
