@@ -188,6 +188,15 @@ body.quake .app{animation:shake .4s}
 .shelf-ch{background:#fff;border-radius:18px;box-shadow:var(--shadow);margin-bottom:10px;padding:4px 12px}.shelf-ch summary{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 0;font-weight:800;font-size:16px;line-height:2;cursor:pointer;list-style:none}
 .shelf-ch summary::-webkit-details-marker{display:none}.shelf-ch em{font-style:normal;font-size:14px;color:var(--muted);white-space:nowrap}.shelf-ch em.full{color:#e0a800}
 .shelf-ch .cards{padding-bottom:12px}.card.super{background:linear-gradient(135deg,#fff,#ffe9f2);position:relative}.card.super:after{content:'⭐';position:absolute;top:2px;right:6px;font-size:14px}
+.rbadge{width:22px;height:22px;vertical-align:middle;margin-right:4px}.rbadge.big{width:72px;height:72px;margin:0}
+.rank{display:inline-block;font-size:12px;font-weight:800;color:#8a5a00;background:#fff3c4;border-radius:999px;padding:0 10px;line-height:2;margin-top:4px}
+.buddycard{display:flex;align-items:center;gap:12px;background:#fff;border-radius:20px;padding:10px 14px;box-shadow:var(--shadow);margin-bottom:14px}
+.buddycard img.buddy{width:72px;height:72px;object-fit:contain;animation:bob 2s ease-in-out infinite}.buddycard>div{flex:1;line-height:1.9}.buddycard b{display:block;font-size:16px}.buddycard span{font-size:13px;color:var(--muted)}
+.buddycard .bar{height:10px;border-radius:999px;background:#f3e6d8;overflow:hidden;margin:4px 0}.buddycard .bar i{display:block;height:100%;background:linear-gradient(90deg,#ffb3cf,#ff6fa5)}.buddycard small{font-size:12px;color:var(--muted)}
+.hintbtn{display:flex;align-items:center;gap:8px;margin:0 auto 10px;background:#fff;border-radius:999px;padding:4px 16px 4px 6px;box-shadow:var(--shadow);font-weight:800;font-size:15px}
+.hintbtn:disabled{opacity:.45}.hintbtn small{display:block;font-size:11px;color:var(--muted);line-height:1.2}.hintbtn span{text-align:left;line-height:1.4}
+img.buddy.mini{width:44px;height:44px;object-fit:contain}
+.hintbox{display:flex;gap:8px;align-items:flex-start;background:#fff8e1;border:3px solid #ffd23f;border-radius:18px;padding:10px 12px;margin-bottom:10px;font-size:16px;line-height:2;animation:pop .3s}.hintbox b{display:block;font-size:14px;color:#8a5a00}
 @media(prefers-reduced-motion:reduce){*{animation:none!important}}
 </style>
 </head>
@@ -212,6 +221,15 @@ function rnd(n,abc){const a=new Uint32Array(n);crypto.getRandomValues(a);return 
 if(!S.key)S.key=rnd(32,'abcdefghijkmnopqrstuvwxyz23456789');
 if(!S.pcode)S.pcode=rnd(10,'ABCDEFGHJKLMNPQRSTUVWXYZ23456789');  // no 0/O, 1/I: easy to type
 S.log=S.log||[];S.time=S.time||{};save();
+// ---------- buddy puppy & rank ----------
+S.buddy=Object.assign({xp:0,name:'ココ',hintDay:'',hints:0},S.buddy||{});
+const BUDDY_STEPS=[0,150,500],HINTS_PER_DAY=3;
+const buddyStage=()=>BUDDY_STEPS.filter(v=>S.buddy.xp>=v).length-1;
+const buddyImg=(cls='')=>`<img class="buddy ${cls}" src="art/buddy/b${buddyStage()}.png" alt="${esc(S.buddy.name)}">`;
+const hintsLeft=()=>S.buddy.hintDay===today()?Math.max(0,HINTS_PER_DAY-S.buddy.hints):HINTS_PER_DAY;
+const RANKS=[[0,'みならい<ruby>案内人<rt>あんないにん</rt></ruby>'],[300,'ルーキー<ruby>営業<rt>えいぎょう</rt></ruby>'],[1000,'エース<ruby>相談役<rt>そうだんやく</rt></ruby>'],[2500,'カリスマ<ruby>宅建士<rt>たっけんし</rt></ruby>'],[5000,'<ruby>伝説<rt>でんせつ</rt></ruby>の<ruby>不動産王<rt>ふどうさんおう</rt></ruby>']];
+const rankIdx=()=>RANKS.filter(r=>S.xp>=r[0]).length-1;
+const rankName=()=>RANKS[rankIdx()][1];
 const pcodeShow=()=>S.pcode.replace(/(.{4})(.{4})(.{2})/,'$1-$2-$3');
 function logStudy(e){S.log.push({t:Date.now(),...e});if(S.log.length>300)S.log=S.log.slice(-300);save();syncSoon()}
 // study time: count only while the app is on screen
@@ -336,7 +354,8 @@ function home(){
  <div class="hello">${say('neko',done?'happy':'normal',greet,true)}</div>
  ${meterCard()}
  <div class="lvl"><b>レベル ${lv}</b> <span class="muted">あと${100-S.xp%100}ポイントでレベルアップ</span><div class="bar"><i style="width:${S.xp%100}%"></i></div></div>
- <button class="me" onclick="go(closet)"><span class="mefig">${avatarHTML(S.look,myStage(),done?'happy':'normal','full')}</span><span class="mecopy"><b>${esc(S.name)}</b><span class="stg">${STAGES[myStage()].name}</span>${myStage()<STAGES.length-1?`<small>レベル${STAGES[myStage()+1].from}で${STAGES[myStage()+1].name}に<ruby>成長<rt>せいちょう</rt></ruby>！</small>`:'<small>さいこうの<ruby>成長<rt>せいちょう</rt></ruby>だんかい！</small>'}<span class="pill" style="margin-top:8px">👗 きせかえ</span></span></button>
+ <button class="me" onclick="go(closet)"><span class="mefig">${avatarHTML(S.look,myStage(),done?'happy':'normal','full')}</span><span class="mecopy"><b>${esc(S.name)}</b><span class="stg">${STAGES[myStage()].name}</span><span class="rank"><img class="rbadge" src="art/rank/r${rankIdx()}.png" alt="">${rankName()}</span>${myStage()<STAGES.length-1?`<small>レベル${STAGES[myStage()+1].from}で${STAGES[myStage()+1].name}に<ruby>成長<rt>せいちょう</rt></ruby>！</small>`:'<small>さいこうの<ruby>成長<rt>せいちょう</rt></ruby>だんかい！</small>'}<span class="pill" style="margin-top:8px">👗 きせかえ</span></span></button>
+ <div class="buddycard">${buddyImg()}<div><b>あいぼう：${esc(S.buddy.name)}</b><span>${['こいぬ','リボンのこいぬ','おうかんのこいぬ'][buddyStage()]}</span>${buddyStage()<2?`<div class="bar"><i style="width:${Math.min(100,(S.buddy.xp-BUDDY_STEPS[buddyStage()])/(BUDDY_STEPS[buddyStage()+1]-BUDDY_STEPS[buddyStage()])*100)}%"></i></div><small><ruby>正解<rt>せいかい</rt></ruby>するとなかよし<ruby>度<rt>ど</rt></ruby>アップ</small>`:'<small>さいこうに<ruby>仲<rt>なか</rt></ruby>よし！</small>'}</div></div>
  <div class="mission ${missionDone()?'done':''}"><b>🎯 <ruby>今日<rt>きょう</rt></ruby>のミッション</b><span>レッスン・ふくしゅう・ことばゲームのどれかを1<ruby>回<rt>かい</rt></ruby>クリア</span><em>${missionDone()?'✅ クリア！':`🪙 +${MISSION}`}</em></div>
  <button class="big" onclick="go(lesson,'${nx.id}')">▶ 「${nx.titleHtml}」をはじめる</button>
  <div class="grid2"><button class="tile" onclick="go(map)"><span class="ic">🗺️</span>ステージ</button><button class="tile" onclick="go(zukan)"><span class="ic">📘</span><ruby>用語<rt>ようご</rt></ruby>じてん<br><small class="muted">${jitenPct()}% コンプリート</small></button></div>
@@ -377,7 +396,7 @@ let Q=null;
 function quiz(id,items,title){
  const l=id&&lessons().find(l=>l.id===id);
  Q={id,list:items||l.quiz.map(q=>({...q,from:id})),i:0,ok:0,combo:0,miss:[],title:title||l.titleHtml};
- Q.mon=monsterFor(id||'review');Q.need=Math.max(1,Q.list.length-1);Q.hits=0;
+ Q.mon=monsterFor(id||'review');Q.bStage=buddyStage();Q.rank=rankIdx();Q.hinted=false;Q.need=Math.max(1,Q.list.length-1);Q.hits=0;
  qShow();
 }
 function qShow(){
@@ -386,12 +405,13 @@ function qShow(){
  <div class="enemy" id="enemy">${enemyCard('normal')}</div>
  <div class="qno">もんだい ${Q.i+1} / ${Q.list.length}　<span class="muted">${Q.title}</span></div><div class="qrow">${chara('mirai','think')}<div class="qcard">${q.qHtml}</div></div>
  <div class="combo">${Q.combo>=2?`🔥 ${Q.combo}れんぞく せいかい！`:''}</div>
+ <div id="hint"><button class="hintbtn" onclick="wanHint()" ${hintsLeft()?'':'disabled'}>${buddyImg('mini')}<span>ワンワンヒント<small>きょう あと${hintsLeft()}<ruby>回<rt>かい</rt></ruby></small></span></button></div>
  <div id="ans"><div class="ox"><button class="o" onclick="qAnswer(true)" aria-label="まる">○</button><button class="x" onclick="qAnswer(false)" aria-label="ばつ">×</button></div></div>`;
  if(S.autoRead)speak(q.qHtml);
 }
 function qAnswer(v){
  const q=Q.list[Q.i],ok=v===q.a;
- if(ok){Q.ok++;Q.combo++;Q.hits++}else{Q.combo=0;Q.miss.push(q)}
+ if(ok){Q.ok++;Q.combo++;Q.hits++;S.buddy.xp+=Q.combo>=3?5:3}else{Q.combo=0;Q.miss.push(q)}
  battleFx(ok);
  $('#ans').innerHTML=`<div class="fb ${ok?'ok':'ng'}"><div class="stage">${chara('mirai',ok?'happy':'sad',true)}<div><h3>${ok?'せいかい！':'ざんねん…'}</h3><div>こたえは <b style="font-size:24px">${q.a?'○':'×'}</b></div></div></div><div>${q.whyHtml}</div></div><div style="height:14px"></div><button class="big ${ok?'green':'blue'}" onclick="qNext()">${Q.i+1<Q.list.length?'つぎのもんだい ›':'けっかを見る'}</button>`;
  if(!ok||S.autoRead)speak(q.whyHtml);
@@ -417,6 +437,16 @@ function battleEnd(){
  return `<div class="bres ${win?'win':'lose'}"><div class="mon small">${monsterSVG(m,win?'down':'normal')}</div><div><b>${win?`${bruby(m.name)}をやっつけた！`:`${bruby(m.name)}に、にげられた…`}</b><span>${win?`ボーナス 🪙 +${bonus}`:'もう1<ruby>回<rt>かい</rt></ruby>ちょうせんして、やっつけよう！'}</span>${drop?`<span class="drop">🎁 ドロップ：${drop.name}</span>`:''}</div></div>`;
 }
 
+// The buddy shows the lesson's key point (not the answer): ○× has no wrong choices to remove.
+function wanHint(){
+ if(!hintsLeft())return;
+ const q=Q.list[Q.i],l=lessons().find(l=>l.id===(q.from||Q.id));
+ const pt=l&&(l.panels.find(p=>p.who==='point')||l.panels.find(p=>p.html));
+ if(S.buddy.hintDay!==today()){S.buddy.hintDay=today();S.buddy.hints=0}
+ S.buddy.hints++;save();
+ $('#hint').innerHTML=`<div class="hintbox">${buddyImg('mini')}<div><b>${esc(S.buddy.name)}「ここがポイントだワン！」</b><div>${pt?pt.html:'レッスンを<ruby>思<rt>おも</rt></ruby>い<ruby>出<rt>だ</rt></ruby>してみてワン！'}</div></div></div>`;
+}
+
 function qNext(){Q.i++;if(Q.i<Q.list.length)return qShow();result()}
 
 function result(){
@@ -438,6 +468,8 @@ function result(){
  ${star===0&&Q.id?`<button class="big" onclick="go(quiz,'${Q.id}')">もう1回クイズ</button><div style="height:12px"></div><button class="sub" onclick="go(lesson,'${Q.id}')">レッスンを見なおす</button>`:`<button class="big" onclick="go(home)">ホームへ</button><div style="height:12px"></div><button class="sub" onclick="go(map)">ステージを見る</button>`}`;
  if(star>0){confetti();if(completeMission())setTimeout(()=>toast(`🎯 ミッションクリア！ 🪙 +${MISSION}`),1200)}
  if(myStage()>before)setTimeout(()=>grown(myStage()),900);
+ if(buddyStage()>Q.bStage)setTimeout(()=>{confetti();toast(`🐶 ${esc(S.buddy.name)}がせいちょうした！`)},1600);
+ if(rankIdx()>Q.rank)setTimeout(()=>{confetti();toast(`<img class="rbadge big" src="art/rank/r${rankIdx()}.png" alt=""><br>しょうごうアップ！「${rankName()}」`)},2300);
 }
 
 function review(){
@@ -559,13 +591,14 @@ function toast(html){const t=document.createElement('div');t.className='toast';t
 function settings(){
  app.innerHTML=`${header('せってい','go(home)')}
  <div class="set"><label>なまえ<input class="field" id="nm" value="${esc(S.name)}" maxlength="10" style="margin:0;width:55%;font-size:18px;padding:8px"></label></div>
+ <div class="set"><label>あいぼうの<ruby>名前<rt>なまえ</rt></ruby><input class="field" id="bn" value="${esc(S.buddy.name)}" maxlength="8" style="margin:0;width:55%;font-size:18px;padding:8px"></label></div>
  <div class="set"><label>ふりがなを出す<input type="checkbox" id="fu" ${S.furi?'checked':''}></label></div>
  <div class="set"><label>レッスンを<ruby>自動<rt>じどう</rt></ruby>でよみあげ<input type="checkbox" id="ar" ${S.autoRead?'checked':''}></label></div>
  <div class="set"><label>よみあげの<ruby>速<rt>はや</rt></ruby>さ<input type="range" id="rt" min="0.6" max="1.3" step="0.05" value="${S.rate}"></label><button class="sub" style="margin-top:10px" onclick="speak('たっけんクエストへようこそ。いっしょにがんばろう。')">🔊 ためしによむ</button></div>
  <button class="big" onclick="setSave()">ほぞんする</button>
  <div class="set" style="margin-top:22px"><b>👨‍👩‍👧 おうちの<ruby>人<rt>ひと</rt></ruby>コード</b><div class="pcode">${pcodeShow()}</div><p class="muted">おうちの<ruby>人<rt>ひと</rt></ruby>がこのコードを<ruby>入<rt>い</rt></ruby>れると、<ruby>勉強<rt>べんきょう</rt></ruby>のがんばりを<ruby>見<rt>み</rt></ruby>られるよ。</p></div>`;
 }
-function setSave(){S.name=$('#nm').value.trim()||S.name;S.furi=$('#fu').checked;S.autoRead=$('#ar').checked;S.rate=+$('#rt').value;save();applyFuri();go(home)}
+function setSave(){S.name=$('#nm').value.trim()||S.name;S.buddy.name=$('#bn').value.trim()||S.buddy.name;S.furi=$('#fu').checked;S.autoRead=$('#ar').checked;S.rate=+$('#rt').value;save();applyFuri();go(home)}
 function applyFuri(){document.body.classList.toggle('nofuri',!S.furi)}
 
 // ---------- start ----------
