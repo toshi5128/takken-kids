@@ -1,7 +1,7 @@
-"""Full-body hairstyle sheet (Gemini, 3 x 2 figures on white) -> art/<prefix>_hair_<id>.png
+"""Full-body sheet (Gemini: hairstyles or outfits, figures in rows on white) -> art/<prefix>_<id>.png
 The figures are found by the white gaps between them, so no boxes need to be measured by hand.
 Prints the ART lines (face position + bust crop width matched to the base outfit's crop).
-Usage: python tools/hairsheet.py art/_src_hairsheet_s2.jpg s2 art/s2_coord1.png 0.66 pony,braids,halfup,bob,twin,bun
+Usage: python tools/hairsheet.py art/_src_hairsheet_s2.jpg s2_hair art/s2_coord1.png 0.66 pony,braids,halfup,bob,twin,bun
 """
 import sys
 from pathlib import Path
@@ -29,6 +29,15 @@ def main(sheet, prefix, base, base_cw, ids):
     cells = []
     for y0, y1 in rows:
         cols = spans([all(white(x, y) for y in range(y0, y1, 2)) for x in range(w)], 40)
+        # figures touching (pom-poms, dress hems) -> cut the widest run at its emptiest column near the
+        # middle until the row has as many figures as expected
+        per_row = len(ids) // len(rows)
+        ink = lambda x: sum(not white(x, y) for y in range(y0, y1, 2))
+        while len(cols) < per_row:
+            a, b_ = max(cols, key=lambda c: c[1] - c[0])
+            k = round((b_ - a) / ((w - 40) / per_row)) or 2  # how many figures this run holds
+            m = min(range(a + (b_ - a) * 7 // (10 * k), a + (b_ - a) * 13 // (10 * k)), key=ink)
+            i = cols.index((a, b_)); cols[i:i + 1] = [(a, m), (m, b_)]
         cells += [(x0, y0, x1, y1) for x0, x1 in cols]
     assert len(cells) == len(ids), f'found {len(cells)} figures, expected {len(ids)}'
     b = Image.open(ROOT / base).convert('RGBA'); bf0, bf1, _ = face(b)
@@ -37,9 +46,9 @@ def main(sheet, prefix, base, base_cw, ids):
         cell = cutout(im.crop((max(0, x0 - pad), max(0, y0 - pad), min(w, x1 + pad), min(h, y1 + pad))), False)
         cell = cell.crop(cell.getbbox())
         f0, f1, fy = face(cell)
-        cw = base_cw * ((bf1 - bf0) / b.width) / ((f1 - f0) / cell.width)
-        cell.save(ROOT / f'art/{prefix}_hair_{cid}.png', optimize=True)
-        print(f"{cid}: file:'art/{prefix}_hair_{cid}.png',fx:{(f0 + f1) / 2 / cell.width:.3f},fy:{fy / cell.height:.3f},cw:{cw:.2f}  {cell.size}")
+        cw = base_cw * ((f1 - f0) / cell.width) / ((bf1 - bf0) / b.width)  # same face size in the bust circle as the base outfit
+        cell.save(ROOT / f'art/{prefix}_{cid}.png', optimize=True)
+        print(f"{cid}: file:'art/{prefix}_{cid}.png',fx:{(f0 + f1) / 2 / cell.width:.3f},fy:{fy / cell.height:.3f},cw:{cw:.2f}  {cell.size}")
 
 
 if __name__ == '__main__':
