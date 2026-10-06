@@ -39,7 +39,7 @@ button.ghost{background:transparent;color:var(--blue);width:auto;padding:6px 0}
 <script>
 'use strict';
 // Parent dashboard: reads the summary the kid's app sends (takken_view with the parent code). Read only.
-const RPC='https://aevqdsozxiklyjfavvhf.supabase.co/rest/v1/rpc/takken_view',SKEY='sb_publishable_3J-KuCCmuO_d7WLzQrsrTg_U3QiaF_I';
+const API='https://aevqdsozxiklyjfavvhf.supabase.co/rest/v1/rpc/',RPC=API+'takken_view',SKEY='sb_publishable_3J-KuCCmuO_d7WLzQrsrTg_U3QiaF_I';
 const $=s=>document.querySelector(s),app=$('#app');
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 let course=null,code=null;try{code=localStorage.getItem('tkp_code')}catch{}
@@ -62,11 +62,11 @@ async function load(){
   const r=await fetch(RPC,{method:'POST',headers:{apikey:SKEY,'Content-Type':'application/json'},body:JSON.stringify({p_code:code})});
   const rows=await r.json();if(!r.ok)throw Error();
   if(!rows.length)return ask('このコードの記録が見つかりません。お子さんのアプリを一度開いてから、もう一度入れてください。');
-  show(rows[0].data,rows[0].updated_at);
+  show(rows[0].data,rows[0].updated_at,rows[0].challenge);
  }catch{app.innerHTML+=`<div class="alert">読み込めませんでした。電波を確認して、もう一度お試しください。</div>`}
 }
 
-function show(d,updated){
+function show(d,updated,ch){
  const now=new Date(),t=day(now),log=d.log||[],time=d.time||{};
  const todayLog=log.filter(e=>day(new Date(e.t))===t);
  const week=[...Array(7)].map((_,i)=>{const x=new Date(now-((6-i)*864e5));return {d:day(x),label:'日月火水木金土'[x.getDay()],s:time[day(x)]||0}});
@@ -85,6 +85,7 @@ function show(d,updated){
   <div class="kpi"><span>正答率（7日間）</span><b>${n7?Math.round(ok7/n7*100)+'%':'—'}</b><small>${n7?`${ok7} / ${n7}問`:'記録なし'}</small></div>
   <div class="kpi"><span>連続して勉強</span><b>${d.streak?.days||0}日</b><small>今日のミッション ${d.mission===t?'✅':'まだ'}</small></div>
  </div>
+ ${papaCard(d,ch)}
  <div class="card"><h2>勉強した時間（7日間）</h2><div class="week">${week.map(w=>`<div class="${w.d===t?'today':''}"><em>${mins(w.s)||''}</em><i style="height:${Math.round(w.s/maxS*80)}%"></i>${w.label}</div>`).join('')}</div></div>
  <div class="card"><h2>どこまで進んだか</h2><div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:6px"><span>クリアしたレッスン</span><b>${d.lessonsDone} / ${d.lessonsTotal}</b></div><div class="bar"><i style="width:${d.lessonsTotal?d.lessonsDone/d.lessonsTotal*100:0}%"></i></div>
   <div style="margin-top:10px">${lessonsHtml}</div><p class="muted" style="margin:10px 0 0">言葉カード ${d.words} / ${d.wordsTotal}枚・コイン ${d.coins}</p></div>
@@ -92,9 +93,46 @@ function show(d,updated){
  <div class="card"><h2>まちがえて、まだ復習中の問題</h2>${d.missNow?.length?`<ul class="miss">${d.missNow.map(q=>`<li>${esc(q)}</li>`).join('')}</ul><p class="muted">ここの内容を、ごはんの時などに話題にしてあげると覚えやすくなります。</p>`:'<p class="muted">ありません。よくできています！</p>'}</div>
  <div class="card"><h2>最近の記録</h2>${log.slice(-15).reverse().map(e=>`<div class="row"><span><span class="tag">${kindName[e.k]||e.k}</span>${esc(e.k==='game'?'言葉の意味あて':title(e.id))}</span><span class="s">${e.ok}/${e.n}</span><span class="t">${new Date(e.t).toLocaleString('ja-JP',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})}</span></div>`).join('')||'<p class="muted">まだありません</p>'}</div>
  <p class="muted" style="text-align:center">お子さんのアプリを開いている間、約2分ごとに更新されます。<br><button class="ghost" id="out">別のコードを入れる</button></p>`;
- $('#rf').onclick=load;$('#out').onclick=()=>{try{localStorage.removeItem('tkp_code')}catch{}code=null;ask()};
+ $('#rf').onclick=load;papaWire(d);$('#out').onclick=()=>{try{localStorage.removeItem('tkp_code')}catch{}code=null;ask()};
 }
-load();setInterval(()=>{if(document.visibilityState==='visible'&&code)load()},60000);
+// ---------- パパからの挑戦状: pick up to 5 quiz questions + a message; the kid's app shows it as a boss battle ----------
+let pick=[];
+const lessonById=id=>{for(const c of course.chapters)for(const l of c.lessons)if(l.id===id)return l};
+function papaCard(d,ch){
+ const res=d.papa&&ch&&d.papa.id===ch.id?d.papa:null;
+ const status=!ch?'<p class="muted">まだ出していません。</p>'
+  :`<div class="row"><span>${esc(ch.date)} に出した挑戦状（${ch.qs.length}問）<br><span class="muted">「${esc(ch.msg||'')}」</span></span><span class="s ${res?.win?'ok':''}">${res?(res.win?`クリア！ ${res.ok}/${res.n}`:`ちょうせん中 ${res.ok}/${res.n}`):'まだ'}</span></div>`;
+ const done=Object.keys(d.stars||{});
+ return `<div class="card" id="papa"><h2>📜 パパからの挑戦状</h2>${status}
+ <p class="muted" style="margin-top:10px">クイズを選んで送ると、お子さんのアプリに「ボス戦」として届きます。勝つとコイン+100とプレゼントがもらえます。</p>
+ <button id="auto">おまかせで5問えらぶ（まちがえた問題を優先）</button>
+ <select id="ls" style="width:100%;font:inherit;padding:10px;margin:10px 0;border:2px solid var(--line);border-radius:12px"><option value="">…またはレッスンから選ぶ</option>${course.chapters.map(c=>`<optgroup label="${esc(c.title)}">${c.lessons.map(l=>`<option value="${l.id}">${done.includes(l.id)?'✓ ':''}${esc(l.title)}</option>`).join('')}</optgroup>`).join('')}</select>
+ <div id="qs"></div><div id="picked"></div>
+ <input id="msg" maxlength="40" placeholder="ひとこと（ひらがなで）" style="text-transform:none;letter-spacing:0;font-size:16px;text-align:left">
+ <button id="send" disabled>挑戦状を送る</button><p id="sent" class="muted"></p></div>`;
+}
+function papaWire(d){
+ const render=()=>{$('#picked').innerHTML=pick.length?`<p class="muted">えらんだ問題（${pick.length}/5）</p>`+pick.map((x,i)=>`<div class="row"><span>${esc(lessonById(x.l).quiz[x.i].q)}</span><button class="ghost" data-rm="${i}">はずす</button></div>`).join(''):'';$('#send').disabled=!pick.length};
+ $('#auto').onclick=()=>{
+  const all=[];for(const c of course.chapters)for(const l of c.lessons)l.quiz.forEach((q,i)=>all.push({l:l.id,i,q:q.q}));
+  const miss=all.filter(x=>(d.missNow||[]).includes(x.q)),cleared=all.filter(x=>d.stars?.[x.l]!==undefined&&!miss.includes(x));
+  const shuf=a=>a.sort(()=>Math.random()-.5);
+  pick=[...shuf(miss),...shuf(cleared)].slice(0,5).map(({l,i})=>({l,i}));
+  if(!pick.length)pick=all.slice(0,3).map(({l,i})=>({l,i}));
+  render();
+ };
+ $('#ls').onchange=e=>{const l=lessonById(e.target.value);$('#qs').innerHTML=l?l.quiz.map((q,i)=>`<label class="row" style="justify-content:flex-start"><input type="checkbox" data-i="${i}" ${pick.some(x=>x.l===l.id&&x.i===i)?'checked':''} style="width:auto;margin:0">${esc(q.q)}</label>`).join(''):'';
+  $('#qs').onchange=ev=>{const i=+ev.target.dataset.i,k=pick.findIndex(x=>x.l===l.id&&x.i===i);if(ev.target.checked&&k<0){if(pick.length>=5){ev.target.checked=false;return}pick.push({l:l.id,i})}if(!ev.target.checked&&k>=0)pick.splice(k,1);render()}};
+ $('#picked').onclick=e=>{const b=e.target.closest('[data-rm]');if(b){pick.splice(+b.dataset.rm,1);render()}};
+ $('#send').onclick=async()=>{
+  const ch={id:String(Date.now()),date:day(new Date()),msg:$('#msg').value.trim(),qs:pick};
+  $('#send').disabled=true;
+  try{const r=await fetch(API+'takken_challenge_set',{method:'POST',headers:{apikey:SKEY,'Content-Type':'application/json'},body:JSON.stringify({p_code:code,p_ch:ch})});if(!r.ok||!(await r.json()))throw Error();pick=[];load()}
+  catch{$('#sent').textContent='送れませんでした。もう一度お試しください。';$('#send').disabled=false}
+ };
+ render();
+}
+load();setInterval(()=>{if(document.visibilityState==='visible'&&code&&!pick.length&&!document.activeElement?.closest?.('#papa'))load()},60000);
 </script>
 </body>
 </html>

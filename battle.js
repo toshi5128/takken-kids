@@ -27,6 +27,7 @@ const MONSTERS={
  ch21:{name:'ぜいきんわすれゾンビ',c:'#9fbf86',c2:'#e1efd6',shape:'imp',acc:'bandage',sk:['軽減税率ビーム','固定資産税カレンダー','印紙ペタッ']},
  ch22:{name:'ねだんごまかしダヌキ',c:'#b8937a',c2:'#ecdccf',shape:'imp',acc:'leaf',sk:['地価公示メジャー','原価法ブロック','収益還元ビーム']},
  ch23:{name:'あぶない土地ゴーレム',c:'#a59382',c2:'#ddd2c7',shape:'bot',acc:'crack',sk:['免震クッション','統計グラフアタック','公正競争ルールアロー']},
+ papa:{name:'パパだいまおう',c:'#5b3f99',c2:'#d9ccff',shape:'imp',acc:'crown',sk:['ひらめきパンチ','おぼえたてビーム','パパびっくりスラッシュ','まなびのつるぎ']},
  review:{name:'ふくしゅうゴースト',c:'#c3b8f0',c2:'#f0ecff',shape:'ghost',acc:'none',sk:['ふくしゅうパワー','思い出しビーム','もう間違えないスラッシュ']},
 };
 function monsterFor(lessonId){const ch=(lessonId||'').split('-')[0];return {...(MONSTERS[ch]||MONSTERS.review),id:MONSTERS[ch]?ch:'review'}}

@@ -214,6 +214,8 @@ img.buddy.mini{width:44px;height:44px;object-fit:contain}
 .orow img{width:56px;height:56px;object-fit:contain;flex-shrink:0}.orow span{flex:1;line-height:1.9}.orow b{display:block;font-size:16px}.orow small{display:block;font-size:12px;color:var(--muted);line-height:1.8}.orow small.sp{color:#d1477f;font-weight:800}
 .orow em{font-style:normal;font-weight:800;font-size:14px;white-space:nowrap;color:#8a5a00}
 .obon{display:block;font-size:14px;color:#8a5a00}
+.papacard{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:linear-gradient(135deg,#3b2a6b,#7a4ab0);color:#fff;border-radius:20px;padding:12px 16px;box-shadow:var(--shadow);margin-bottom:14px;animation:pop .4s}
+.papacard .pc-ic{font-size:40px;animation:bob 1.6s ease-in-out infinite}.papacard b{display:block;font-size:17px;line-height:2}.papacard rt{color:#fff}.papacard i{display:block;font-style:normal;font-size:15px;color:#ffe9a8}.papacard small{display:block;font-size:12px;opacity:.9}
 @media(prefers-reduced-motion:reduce){*{animation:none!important}}
 </style>
 </head>
@@ -223,6 +225,7 @@ img.buddy.mini{width:44px;height:44px;object-fit:contain}
 <script src="decor.js"></script>
 <script src="battle.js"></script>
 <script src="office.js"></script>
+<script src="voice.js"></script>
 <script>
 'use strict';
 // ---------- data & progress ----------
@@ -260,8 +263,10 @@ async function sync(){
  const data={v:1,name:S.name,level:level(),stage:STAGES[myStage()].name,xp:S.xp,coins:S.coins,stars:S.stars,
   words:Object.keys(S.words).length,wordsTotal:Object.keys(C.words).length,streak:S.streak,mission:S.mission||'',
   lessonsDone:ls.filter(l=>S.stars[l.id]!==undefined).length,lessonsTotal:ls.length,next:nextLesson().id,
-  missNow:Object.values(S.miss||{}).map(q=>q.q).slice(0,30),log:S.log.slice(-200),time:Object.fromEntries(days.map(d=>[d,S.time[d]])),sentAt:new Date().toISOString()};
+  missNow:Object.values(S.miss||{}).map(q=>q.q).slice(0,30),papa:S.papaRes||null,log:S.log.slice(-200),time:Object.fromEntries(days.map(d=>[d,S.time[d]])),sentAt:new Date().toISOString()};
  try{await fetch(SUPA+'takken_save',{method:'POST',headers:{apikey:SKEY,'Content-Type':'application/json'},body:JSON.stringify({p_key:S.key,p_code:S.pcode,p_data:data}),keepalive:true})}catch{}
+ try{const r=await fetch(SUPA+'takken_challenge_get',{method:'POST',headers:{apikey:SKEY,'Content-Type':'application/json'},body:JSON.stringify({p_key:S.key})});const ch=r.ok?await r.json():undefined;
+  if(ch!==undefined&&JSON.stringify(ch)!==JSON.stringify(S.papa||null)){const fresh=ch&&ch.id!==S.papa?.id&&ch.id!==S.papaRes?.id;S.papa=ch;save();if(fresh&&app.querySelector('.stats')&&!Q?.papa)toast('📜 パパから<ruby>挑戦状<rt>ちょうせんじょう</rt></ruby>がとどいた！')}}catch{}
 }
 setInterval(()=>{if(document.visibilityState==='visible')sync()},120000);
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')sync()});
@@ -294,7 +299,23 @@ function pickVoice(){const v=speechSynthesis.getVoices().filter(v=>/^ja/i.test(v
 if('speechSynthesis' in window){pickVoice();speechSynthesis.onvoiceschanged=pickVoice}
 // The voice reads the furigana shown on screen, so it can never say a reading different from what she sees.
 function plain(html){const d=document.createElement('div');d.innerHTML=html;d.querySelectorAll('.name').forEach(n=>n.remove());d.querySelectorAll('ruby').forEach(r=>{const rt=r.querySelector('rt');r.replaceWith(rt?rt.textContent:r.textContent)});return d.textContent}
-function speak(html){if(!('speechSynthesis' in window))return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(plain(html));u.lang='ja-JP';u.rate=S.rate;if(voice)u.voice=voice;speechSynthesis.speak(u)}
+// Recorded clips (voice.js) play in order; a part without a clip uses the phone's speech engine.
+let VOICES=new Set(),vAudio=null,vRun=0;
+fetch('data/voice.json',{cache:'no-cache'}).then(r=>r.json()).then(k=>VOICES=new Set(k)).catch(()=>{});
+function hush(){vRun++;if(vAudio){vAudio.pause();vAudio=null}speechSynthesis?.cancel?.()}
+function ttsPart(html,who){return new Promise(res=>{if(!('speechSynthesis' in window))return res();const u=new SpeechSynthesisUtterance(plain(html));u.lang='ja-JP';u.rate=S.rate;u.pitch=who==='girl'?1.3:.9;if(voice)u.voice=voice;u.onend=u.onerror=res;speechSynthesis.speak(u)})}
+function clipPart(key){return new Promise(res=>{const a=new Audio(`voice/${key}.m4a`);a.playbackRate=S.rate/.95;a.onended=()=>res(true);a.onerror=()=>res(false);vAudio=a;a.play().catch(()=>res(false))})}
+async function speakParts(parts){
+ hush();const run=vRun;
+ for(const [who,html] of parts){
+  if(run!==vRun)return;
+  const k=voiceKey(who,html);
+  if(!(VOICES.has(k)&&await clipPart(k))&&run===vRun)await ttsPart(html,who);
+ }
+}
+function speak(html,who='teacher'){speakParts([[who,html]])}
+let curPanel=null;
+const speakPanel=()=>curPanel&&speakParts(panelParts(curPanel));
 
 // ---------- streak / rewards ----------
 function touchStreak(){const t=today(),y=new Date(Date.now()-864e5).toLocaleDateString('sv-SE');if(S.streak.last===t)return;S.streak.days=S.streak.last===y?S.streak.days+1:1;S.streak.last=t;save()}
@@ -304,12 +325,12 @@ function confetti(){const c=document.createElement('div');c.className='confetti'
 let CHO={};fetch('data/cho.json',{cache:'no-cache'}).then(r=>r.json()).then(d=>CHO=d).catch(()=>{});
 const cho=t=>CHO[t]?CHO[t].replace(/\{name\}/g,esc(S.name||'きみ')):'';
 function wordSheet(t){
- const w=C.words[t];if(!w)return;speechSynthesis?.cancel?.();
+ const w=C.words[t];if(!w)return;hush();
  // meeting a word counts as collecting it
  if(!S.words[t]){S.words[t]=1;save();setTimeout(()=>toast(`📖 じてんに<ruby>登録<rt>とうろく</rt></ruby>！（${jitenPct()}%）`),300)}
  const sh=document.createElement('div');sh.className='shade';
  sh.innerHTML=`<div class="sheet" role="dialog" aria-label="${esc(t)}"><h2><ruby>${esc(t)}<rt>${esc(w.yomi)}</rt></ruby></h2>${cho(t)?`<div class="cho"><b>ひとことで<ruby>言<rt>い</rt></ruby>うと</b>${cho(t)}</div>`:''}<div class="mean">${w.meanHtml}</div><div class="tatoe">💡 たとえば…<br>${w.tatoeHtml}</div><div class="row"><button class="sub" data-say>🔊 よむ</button><button class="big" data-close style="font-size:18px;padding:14px">わかった！</button></div></div>`;
- sh.addEventListener('click',e=>{if(e.target===sh||e.target.closest('[data-close]'))sh.remove();if(e.target.closest('[data-say]'))speak(`${w.yomi}。${cho(t)?'ひとことでいうと、'+cho(t)+'。':''}${w.meanHtml}。たとえば、${w.tatoeHtml}`)});
+ sh.addEventListener('click',e=>{if(e.target===sh||e.target.closest('[data-close]'))sh.remove();if(e.target.closest('[data-say]'))speakParts(wordParts(w,cho(t)))});
  document.body.appendChild(sh);
 }
 document.addEventListener('click',e=>{const b=e.target.closest('.w');if(b){e.stopPropagation();wordSheet(b.dataset.w)}});
@@ -353,7 +374,7 @@ function goal(){
 // ---------- screens ----------
 const app=$('#app');
 function header(title,back){return `<div class="top">${back?`<button class="back" onclick="${back}" aria-label="もどる">‹</button>`:''}<div class="ttl">${title}</div>${back?'<span style="width:44px"></span>':''}</div>`}
-function go(fn,...a){speechSynthesis?.cancel?.();window.scrollTo(0,0);fn(...a)}
+function go(fn,...a){hush();window.scrollTo(0,0);fn(...a)}
 
 function welcome(){
  app.innerHTML=`<div style="margin:auto 0">${say('neko','happy','はじめまして！ぼくは<b>コッカー先生</b>。いっしょに<ruby>宅建<rt>たっけん</rt></ruby>の<ruby>勉強<rt>べんきょう</rt></ruby>をしようワン！<br>きみの<ruby>名前<rt>なまえ</rt></ruby>をおしえて！',true)}<input class="field" id="nm" maxlength="10" placeholder="なまえ" autocomplete="off"><button class="big" id="ok">はじめる！</button></div>`;
@@ -374,6 +395,7 @@ function home(){
  <div class="lvl"><b>レベル ${lv}</b> <span class="muted">あと${100-S.xp%100}ポイントでレベルアップ</span><div class="bar"><i style="width:${S.xp%100}%"></i></div></div>
  <button class="me" onclick="go(closet)"><span class="mefig">${avatarHTML(S.look,myStage(),done?'happy':'normal','full')}</span><span class="mecopy"><b>${esc(S.name)}</b><span class="stg">${STAGES[myStage()].name}</span><span class="rank"><img class="rbadge" src="art/rank/r${rankIdx()}.png" alt="">${rankName()}</span>${myStage()<STAGES.length-1?`<small>レベル${STAGES[myStage()+1].from}で${STAGES[myStage()+1].name}に<ruby>成長<rt>せいちょう</rt></ruby>！</small>`:'<small>さいこうの<ruby>成長<rt>せいちょう</rt></ruby>だんかい！</small>'}<span class="pill" style="margin-top:8px">👗 きせかえ</span></span></button>
  <div class="buddycard">${buddyImg()}<div><b>あいぼう：${esc(S.buddy.name)}</b><span>${['こいぬ','リボンのこいぬ','おうかんのこいぬ'][buddyStage()]}</span>${buddyStage()<2?`<div class="bar"><i style="width:${Math.min(100,(S.buddy.xp-BUDDY_STEPS[buddyStage()])/(BUDDY_STEPS[buddyStage()+1]-BUDDY_STEPS[buddyStage()])*100)}%"></i></div><small><ruby>正解<rt>せいかい</rt></ruby>するとなかよし<ruby>度<rt>ど</rt></ruby>アップ</small>`:'<small>さいこうに<ruby>仲<rt>なか</rt></ruby>よし！</small>'}</div></div>
+ ${papaOpen()?`<button class="papacard" onclick="go(papaBattle)"><span class="pc-ic">📜</span><span><b>パパからの<ruby>挑戦状<rt>ちょうせんじょう</rt></ruby>がとどいた！</b>${S.papa.msg?`<i>「${esc(S.papa.msg)}」</i>`:''}<small>${S.papa.qs.length}<ruby>問<rt>もん</rt></ruby>のボス<ruby>戦<rt>せん</rt></ruby>・かつと 🪙+100＆プレゼント</small></span></button>`:''}
  <div class="mission ${missionDone()?'done':''}"><b>🎯 <ruby>今日<rt>きょう</rt></ruby>のミッション</b><span>レッスン・ふくしゅう・ことばゲームのどれかを1<ruby>回<rt>かい</rt></ruby>クリア</span><em>${missionDone()?'✅ クリア！':`🪙 +${MISSION}`}</em></div>
  <button class="big" onclick="go(lesson,'${nx.id}')">▶ 「${nx.titleHtml}」をはじめる</button>
  <button class="tile otile" onclick="go(office)"><img src="art/office/sign.png" alt=""><span><b>${officeName()}</b><small>${officeBuff()?`✨ クイズのコイン +${officeBuff()}%`:'<ruby>家具<rt>かぐ</rt></ruby>をおいて<ruby>自分<rt>じぶん</rt></ruby>のお<ruby>店<rt>みせ</rt></ruby>をつくろう'}</small></span></button>
@@ -398,11 +420,11 @@ function map(){
 function lesson(id,idx=0){
  const l=lessons().find(l=>l.id===id),p=l.panels[idx],last=idx===l.panels.length-1;
  const body=p.who==='zu'?zuCard(p):p.who==='point'?`<div class="point"><b class="lbl">ここがポイント！</b><br>${p.html}</div>${chara('neko','happy',true)}`:say(p.who,p.face||'normal',p.html,true);
- app.innerHTML=`<div class="top"><button class="back" onclick="go(home)" aria-label="やめる">×</button><div class="prog"><i style="width:${(idx+1)/l.panels.length*100}%"></i></div><button class="back" onclick="speak(document.querySelector('.lesson').innerHTML)" aria-label="よみあげ">🔊</button></div>
+ app.innerHTML=`<div class="top"><button class="back" onclick="go(home)" aria-label="やめる">×</button><div class="prog"><i style="width:${(idx+1)/l.panels.length*100}%"></i></div><button class="back" onclick="speakPanel()" aria-label="よみあげ">🔊</button></div>
  <div class="muted" style="text-align:center">${l.titleHtml}</div><div class="lesson">${body}</div>
  <p class="muted" style="text-align:center">きいろの<ruby>言葉<rt>ことば</rt></ruby>をタップすると<ruby>意味<rt>いみ</rt></ruby>が出るよ</p>
  <div class="tapnext">${idx>0?`<button class="sub" onclick="go(lesson,'${id}',${idx-1})" aria-label="まえへ">‹</button>`:''}<button class="big ${last?'green':''}" onclick="${last?`go(quiz,'${id}')`:`go(lesson,'${id}',${idx+1})`}">${last?'クイズにちょうせん！':'つぎへ ›'}</button></div>`;
- if(S.autoRead)speak($('.lesson').innerHTML);
+ curPanel=p;if(S.autoRead)speakPanel();
 }
 
 // 図で見るまとめ: ○ and × become big coloured marks so the pattern is visible at a glance.
@@ -452,7 +474,8 @@ function battleFx(ok){
 function battleEnd(){
  // Defeat = bonus coins and sometimes a free item from the gacha pool. Losing never takes anything away.
  const m=Q.mon,win=Q.hits>=Q.need;let bonus=0,drop=null;
- if(win){bonus=30;const pool=gachaPool();if(pool.length&&Math.random()<.4){drop=pool[Math.floor(Math.random()*pool.length)];S.owned.push(drop.id)}S.coins+=bonus;S.defeated=S.defeated||{};S.defeated[m.id]=(S.defeated[m.id]||0)+1;save()}
+ if(Q.papa)S.papaRes={id:Q.papa,win,ok:Q.ok,n:Q.list.length,at:new Date().toISOString()};
+ if(win){bonus=Q.papa?100:30;const pool=gachaPool();if(pool.length&&(Q.papa||Math.random()<.4)){drop=pool[Math.floor(Math.random()*pool.length)];S.owned.push(drop.id)}S.coins+=bonus;S.defeated=S.defeated||{};S.defeated[m.id]=(S.defeated[m.id]||0)+1;save()}
  return `<div class="bres ${win?'win':'lose'}"><div class="mon small">${monsterSVG(m,win?'down':'normal')}</div><div><b>${win?`${bruby(m.name)}をやっつけた！`:`${bruby(m.name)}に、にげられた…`}</b><span>${win?`ボーナス 🪙 +${bonus}`:'もう1<ruby>回<rt>かい</rt></ruby>ちょうせんして、やっつけよう！'}</span>${drop?`<span class="drop">🎁 ドロップ：${drop.name}</span>`:''}</div></div>`;
 }
 
@@ -464,6 +487,15 @@ function wanHint(){
  if(S.buddy.hintDay!==today()){S.buddy.hintDay=today();S.buddy.hints=0}
  S.buddy.hints++;save();
  $('#hint').innerHTML=`<div class="hintbox">${buddyImg('mini')}<div><b>${esc(S.buddy.name)}「ここがポイントだワン！」</b><div>${pt?pt.html:'レッスンを<ruby>思<rt>おも</rt></ruby>い<ruby>出<rt>だ</rt></ruby>してみてワン！'}</div></div></div>`;
+}
+
+// ---------- パパからの挑戦状 ----------
+const papaOpen=()=>S.papa&&S.papa.qs?.length&&!(S.papaRes?.id===S.papa.id&&S.papaRes.win);
+function papaBattle(){
+ const items=S.papa.qs.map(({l,i})=>{const ls=lessons().find(x=>x.id===l);return ls&&ls.quiz[i]&&{...ls.quiz[i],from:l}}).filter(Boolean);
+ if(!items.length)return go(home);
+ quiz(null,items,'📜 パパからの<ruby>挑戦状<rt>ちょうせんじょう</rt></ruby>');
+ Q.papa=S.papa.id;Q.mon={...MONSTERS.papa,id:'papa'};qShow();
 }
 
 function qNext(){Q.i++;if(Q.i<Q.list.length)return qShow();result()}
@@ -613,7 +645,7 @@ function settings(){
  <div class="set"><label>あいぼうの<ruby>名前<rt>なまえ</rt></ruby><input class="field" id="bn" value="${esc(S.buddy.name)}" maxlength="8" style="margin:0;width:55%;font-size:18px;padding:8px"></label></div>
  <div class="set"><label>ふりがなを出す<input type="checkbox" id="fu" ${S.furi?'checked':''}></label></div>
  <div class="set"><label>レッスンを<ruby>自動<rt>じどう</rt></ruby>でよみあげ<input type="checkbox" id="ar" ${S.autoRead?'checked':''}></label></div>
- <div class="set"><label>よみあげの<ruby>速<rt>はや</rt></ruby>さ<input type="range" id="rt" min="0.6" max="1.3" step="0.05" value="${S.rate}"></label><button class="sub" style="margin-top:10px" onclick="speak('たっけんクエストへようこそ。いっしょにがんばろう。')">🔊 ためしによむ</button></div>
+ <div class="set"><label>よみあげの<ruby>速<rt>はや</rt></ruby>さ<input type="range" id="rt" min="0.6" max="1.3" step="0.05" value="${S.rate}"></label><button class="sub" style="margin-top:10px" onclick="speak('たっけんクエストへようこそ。いっしょにがんばろうワン！')">🔊 ためしによむ</button></div>
  <button class="big" onclick="setSave()">ほぞんする</button>
  <div class="set" style="margin-top:22px"><b>👨‍👩‍👧 おうちの<ruby>人<rt>ひと</rt></ruby>コード</b><div class="pcode">${pcodeShow()}</div><p class="muted">おうちの<ruby>人<rt>ひと</rt></ruby>がこのコードを<ruby>入<rt>い</rt></ruby>れると、<ruby>勉強<rt>べんきょう</rt></ruby>のがんばりを<ruby>見<rt>み</rt></ruby>られるよ。</p></div>`;
 }
