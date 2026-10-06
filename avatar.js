@@ -91,7 +91,21 @@ const ART=[
  {id:'h1_asym',st:0,kind:'hair',name:'クールなアシメ',p:150,file:'art/s1_hair_asym.png',fx:0.522,fy:0.171,cw:0.57},
  {id:'h1_updo',st:0,kind:'hair',name:'ふんわりアップ',p:100,file:'art/s1_hair_updo.png',fx:0.507,fy:0.192,cw:0.59},
  {id:'m_sailor',st:1,name:'セーラー<ruby>服<rt>ふく</rt></ruby>',p:0,file:'art/s2_coord1.png',fx:.474,fy:.15,cw:.66},
+ // hairstyles for the sailor uniform (full-body Gemini sheet cut by tools/hairsheet.py)
+ {id:'h2_pony',st:1,kind:'hair',name:'シュシュポニー',p:80,file:'art/s2_hair_pony.png',fx:0.442,fy:0.163,cw:0.69},
+ {id:'h2_braids',st:1,kind:'hair',name:'みつあみおさげ',p:80,file:'art/s2_hair_braids.png',fx:0.462,fy:0.142,cw:0.65},
+ {id:'h2_halfup',st:1,kind:'hair',name:'ハーフアップ',p:80,file:'art/s2_hair_halfup.png',fx:0.462,fy:0.143,cw:0.64},
+ {id:'h2_bob',st:1,kind:'hair',name:'ボブ',p:60,file:'art/s2_hair_bob.png',fx:0.463,fy:0.140,cw:0.61},
+ {id:'h2_twin',st:1,kind:'hair',name:'ツインテール',p:100,file:'art/s2_hair_twin.png',fx:0.470,fy:0.140,cw:0.64},
+ {id:'h2_bun',st:1,kind:'hair',name:'ゆるふわおだんご',p:100,file:'art/s2_hair_bun.png',fx:0.458,fy:0.139,cw:0.60},
  {id:'g_uniform',st:2,name:'<ruby>制服<rt>せいふく</rt></ruby>ギャル',p:0,file:'art/s3_coord1.png',fx:.502,fy:.145,cw:.64},
+ // hairstyles for the gyaru uniform
+ {id:'h3_halftwin',st:2,kind:'hair',name:'まき<ruby>髪<rt>がみ</rt></ruby>ハーフツイン',p:120,file:'art/s3_hair_halftwin.png',fx:0.506,fy:0.137,cw:0.66},
+ {id:'h3_highpony',st:2,kind:'hair',name:'もりもりハイポニー',p:120,file:'art/s3_hair_highpony.png',fx:0.470,fy:0.171,cw:0.68},
+ {id:'h3_odango',st:2,kind:'hair',name:'ダブルおだんご',p:120,file:'art/s3_hair_odango.png',fx:0.511,fy:0.150,cw:0.68},
+ {id:'h3_flip',st:2,kind:'hair',name:'<ruby>外<rt>そと</rt></ruby>ハネミディアム',p:100,file:'art/s3_hair_flip.png',fx:0.504,fy:0.137,cw:0.66},
+ {id:'h3_inner',st:2,kind:'hair',name:'ピンクのインナーカラー',p:200,file:'art/s3_hair_inner.png',fx:0.504,fy:0.144,cw:0.70},
+ {id:'h3_braidwave',st:2,kind:'hair',name:'あみこみゆるまき',p:150,file:'art/s3_hair_braidwave.png',fx:0.504,fy:0.140,cw:0.68},
 ];
 // Face close-ups per outfit and expression ('<coord id>_<face>'), so the clothes in the face always match.
 // Missing ones are cut from the outfit art itself.
