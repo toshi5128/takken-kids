@@ -234,7 +234,12 @@ const KEY='tk_v1';
 const S=Object.assign({name:'',coins:0,xp:0,stars:{},best:{},words:{},streak:{last:'',days:0},rate:0.95,furi:true,look:{...DEFAULT_LOOK},owned:[...ITEMS,...ART].filter(i=>!i.p).map(i=>i.id),seenStage:0},load());
 // 2026-10-05 下田さん「つぎへを押したら自動で読んでほしい」→ 自動よみあげを最初からON（設定でOFFにできる）
 if(!S.autoReadV2){S.autoRead=true;S.autoReadV2=1;save()}
-const myStage=()=>stageOf(level());
+// 2026-10-06 下田さん「レベルアップ簡単にしすぎても良くない」→ 成長はクリアしたレッスン数で決める（35個で中学生・75個で高校生）。
+// Growth never goes back: anyone who already grew under the old level rule keeps that stage.
+const GROW_AT=[0,35,75];
+const lessonsCleared=()=>Object.keys(S.stars).length;
+if(S.stageKeep===undefined){S.stageKeep=stageOf(Math.floor(S.xp/100)+1);save()}
+const myStage=()=>Math.max(S.stageKeep,GROW_AT.filter(n=>lessonsCleared()>=n).length-1);
 
 // ---------- parent view: send a study summary to the cloud (read with the parent code) ----------
 const SUPA='https://aevqdsozxiklyjfavvhf.supabase.co/rest/v1/rpc/',SKEY='sb_publishable_3J-KuCCmuO_d7WLzQrsrTg_U3QiaF_I';
@@ -393,7 +398,7 @@ function home(){
  <div class="hello">${say('neko',done?'happy':'normal',greet,true)}</div>
  ${meterCard()}
  <div class="lvl"><b>レベル ${lv}</b> <span class="muted">あと${100-S.xp%100}ポイントでレベルアップ</span><div class="bar"><i style="width:${S.xp%100}%"></i></div></div>
- <button class="me" onclick="go(closet)"><span class="mefig">${avatarHTML(S.look,myStage(),done?'happy':'normal','full')}</span><span class="mecopy"><b>${esc(S.name)}</b><span class="stg">${STAGES[myStage()].name}</span><span class="rank"><img class="rbadge" src="art/rank/r${rankIdx()}.png" alt="">${rankName()}</span>${myStage()<STAGES.length-1?`<small>レベル${STAGES[myStage()+1].from}で${STAGES[myStage()+1].name}に<ruby>成長<rt>せいちょう</rt></ruby>！</small>`:'<small>さいこうの<ruby>成長<rt>せいちょう</rt></ruby>だんかい！</small>'}<span class="pill" style="margin-top:8px">👗 きせかえ</span></span></button>
+ <button class="me" onclick="go(closet)"><span class="mefig">${avatarHTML(S.look,myStage(),done?'happy':'normal','full')}</span><span class="mecopy"><b>${esc(S.name)}</b><span class="stg">${STAGES[myStage()].name}</span><span class="rank"><img class="rbadge" src="art/rank/r${rankIdx()}.png" alt="">${rankName()}</span>${myStage()<STAGES.length-1?`<small>あとレッスン${GROW_AT[myStage()+1]-lessonsCleared()}こクリアで${STAGES[myStage()+1].name}に<ruby>成長<rt>せいちょう</rt></ruby>！</small>`:'<small>さいこうの<ruby>成長<rt>せいちょう</rt></ruby>だんかい！</small>'}<span class="pill" style="margin-top:8px">👗 きせかえ</span></span></button>
  <div class="buddycard">${buddyImg()}<div><b>あいぼう：${esc(S.buddy.name)}</b><span>${['こいぬ','リボンのこいぬ','おうかんのこいぬ'][buddyStage()]}</span>${buddyStage()<2?`<div class="bar"><i style="width:${Math.min(100,(S.buddy.xp-BUDDY_STEPS[buddyStage()])/(BUDDY_STEPS[buddyStage()+1]-BUDDY_STEPS[buddyStage()])*100)}%"></i></div><small><ruby>正解<rt>せいかい</rt></ruby>するとなかよし<ruby>度<rt>ど</rt></ruby>アップ</small>`:'<small>さいこうに<ruby>仲<rt>なか</rt></ruby>よし！</small>'}</div></div>
  ${papaOpen()?`<button class="papacard" onclick="go(papaBattle)"><span class="pc-ic">📜</span><span><b>パパからの<ruby>挑戦状<rt>ちょうせんじょう</rt></ruby>がとどいた！</b>${S.papa.msg?`<i>「${esc(S.papa.msg)}」</i>`:''}<small>${S.papa.qs.length}<ruby>問<rt>もん</rt></ruby>のボス<ruby>戦<rt>せん</rt></ruby>・かつと 🪙+100＆プレゼント</small></span></button>`:''}
  <div class="mission ${missionDone()?'done':''}"><b>🎯 <ruby>今日<rt>きょう</rt></ruby>のミッション</b><span>レッスン・ふくしゅう・ことばゲームのどれかを1<ruby>回<rt>かい</rt></ruby>クリア</span><em>${missionDone()?'✅ クリア！':`🪙 +${MISSION}`}</em></div>
@@ -614,7 +619,8 @@ function buy(id){
  S.coins-=i.p;S.owned.push(id);S.look[i.cat]=id;tryOn=null;save();confetti();closet();toast(`「${i.name}」をゲット！`);
 }
 // Gacha: a random item she doesn't own yet, from what her stage allows. Cheaper items come up more often.
-const GACHA=50;
+// 2026-10-06 下田さん「きせかえとかも安すぎたら良くない」→ 値段は全部3倍（全部そろうまで約半年）
+const GACHA=150;
 function gachaPool(){const st=myStage();return ITEMS.filter(i=>['bg','fx','pet'].includes(i.cat)&&i.p>0&&i.st<=st&&!S.owned.includes(i.id))}
 function gacha(){
  const pool=gachaPool();
